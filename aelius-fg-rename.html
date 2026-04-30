@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeliusParallel · FG Rename Tool</title>
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDOkvXJMpIShul_WJV8Sj8WbIkOn6U5iMc",
+  authDomain:        "aphl-pms-dashboard.firebaseapp.com",
+  projectId:         "aphl-pms-dashboard",
+  storageBucket:     "aphl-pms-dashboard.firebasestorage.app",
+  messagingSenderId: "306613784090",
+  appId:             "1:306613784090:web:9f6909175b9da4db08cba3"
+};
+window.RENAME_ROLE_MAP = {
+  "sankalp.chopra@aeliusparallel.com": "FOUNDERS",
+  "pms@aphl.in":                       "PMS_TRACKER"
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#0a0e1a;--bg-2:#0f1421;--panel:#131829;--panel-2:#1a2034;
+  --line:rgba(255,255,255,0.08);--ink:#e5e9f0;--ink-2:#9ba3b4;--ink-3:#5d6478;
+  --accent:#d4ff3a;--accent-2:#a685ff;--good:#5dd39e;--warn:#ffb83a;--bad:#ff6b6b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:13px;line-height:1.5;padding:30px;
+  max-width:1100px;margin:0 auto}
+h1{font-size:22px;color:var(--accent);margin-bottom:6px}
+.sub{font-size:12px;color:var(--ink-2);margin-bottom:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:20px;margin-bottom:14px}
+.hidden{display:none !important}
+.mono{font-family:'SF Mono',Monaco,monospace}
+button{font-family:inherit;border-radius:5px;font-size:12px;padding:7px 12px;
+  background:var(--panel-2);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+button:hover:not(:disabled){background:var(--panel)}
+button:disabled{opacity:0.4;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--bg);border:none;font-weight:600}
+button.primary:hover:not(:disabled){background:#c4ef2a}
+input,select{font-family:inherit;background:var(--bg-2);color:var(--ink);
+  border:1px solid var(--line);padding:7px 10px;font-size:12px;border-radius:4px;width:100%}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.login-card{max-width:380px;margin:80px auto}
+.login-input{margin-bottom:12px}
+.login-btn{width:100%;padding:11px;font-size:13px;font-weight:600}
+.login-err{color:var(--bad);font-size:11px;margin-top:10px;min-height:14px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:14px 16px;border-left:3px solid var(--accent)}
+.kpi.good{border-left-color:var(--good)}
+.kpi.warn{border-left-color:var(--warn)}
+.kpi.info{border-left-color:var(--accent-2)}
+.kpi-val{font-size:22px;font-weight:600;line-height:1}
+.kpi-label{font-size:9px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.06em;margin-top:5px}
+
+.row{padding:14px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.row-current{font-weight:600;font-size:13px}
+.row-meta{font-size:10px;color:var(--ink-3)}
+.confidence-pill{font-size:9px;font-weight:700;text-transform:uppercase;
+  padding:2px 7px;border-radius:8px;letter-spacing:0.05em}
+.confidence-HIGH{background:rgba(93,211,158,0.18);color:var(--good)}
+.confidence-MEDIUM{background:rgba(255,184,58,0.18);color:var(--warn)}
+.confidence-LOW{background:rgba(255,107,107,0.15);color:var(--bad)}
+
+.action-row{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin-top:6px}
+.action-label{font-size:10px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.05em}
+.skip-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2);margin-top:4px}
+.skip-toggle input{width:auto}
+
+.banner{padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:12px}
+.banner.info{background:rgba(166,133,255,0.08);border:1px solid rgba(166,133,255,0.3);color:var(--accent-2)}
+.banner.warn{background:rgba(255,184,58,0.08);border:1px solid rgba(255,184,58,0.3);color:var(--warn)}
+.banner.good{background:rgba(93,211,158,0.08);border:1px solid rgba(93,211,158,0.3);color:var(--good)}
+
+.user-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;
+  padding:10px 14px;background:var(--panel);border-radius:6px;border:1px solid var(--line)}
+.user-info{font-size:11px;color:var(--ink-2)}
+.user-info strong{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<h1>FG Rename Tool</h1>
+<div class="sub">Rename the 10 FGs in PMS production records to their canonical names. Reads and writes <code>production/data</code> only. Reversible via audit log.</div>
+
+<!-- LOGIN -->
+<div class="card login-card" id="login-card">
+  <input class="login-input" type="email" id="email" placeholder="email" autocomplete="email"/>
+  <input class="login-input" type="password" id="pass" placeholder="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+  <button class="primary login-btn" onclick="doLogin()" id="login-btn">Sign In →</button>
+  <div class="login-err" id="login-err"></div>
+</div>
+
+<!-- LOADING -->
+<div class="card hidden" id="loading-card">
+  <div>📥 Reading PMS production data...</div>
+</div>
+
+<!-- MAIN -->
+<div id="main" class="hidden">
+  <div class="user-bar">
+    <div class="user-info">Signed in as <strong id="user-email"></strong> (<span id="user-role"></span>)</div>
+    <button onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div id="kpi-area"></div>
+  <div id="banner-area"></div>
+  <div id="rename-list"></div>
+  <div id="action-area"></div>
+</div>
+
+<!-- Embedded reconciliation data (auto-suggested matches) -->
+<script id="recon-data" type="application/json">{"fgMapping":[{"pmsName":"Hyphen Dual Shot Radiance Lift Serum","pmsBrand":"Hyphen","batchCount":45,"suggestedCanonical":"Hyphen Dual Shot Radiance Lift Serum","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"Patua Hair serum (yellow)","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim Argan Oil Hair Serum 100ml","matchScore":0.45,"confidence":"MEDIUM"},{"pmsName":"Pilgrim Argan Oil Hair Mask 200gm","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim Argan Oil Hair Mask 200gm","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"Pilgrim Patua & Hyaluronic Acid Intense Hydration & Frizz Control Smoothening Hair Serum 100ml","pmsBrand":"Pilgrim","batchCount":3,"suggestedCanonical":"Pilgrim Patua & Hyaluronic Acid Intense Hydration & Frizz Control Smoothening Hair Serum 100ml","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"Pilgrim Patua & Keratin Smoothing Hair Mask 200gm","pmsBrand":"Pilgrim","batchCount":12,"suggestedCanonical":"Pilgrim Patua & Keratin Smoothing Hair Mask 200gm","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"Pilgrim White Lotus Natural Day Cream SPF 50 100gm","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim White Lotus Natural Day Cream SPF 50 100gm","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"Pilgrim White Lotus Natural Face Mist & Toner 100ml","pmsBrand":"Pilgrim","batchCount":3,"suggestedCanonical":"Pilgrim White Lotus Natural Face Mist & Toner 100ml","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"SILK Pro Patua Hair Mask 200gm Black","pmsBrand":"Pilgrim","batchCount":1,"suggestedCanonical":"Pilgrim Professional Slik Pro Hair Mask 200gm","matchScore":0.51,"confidence":"MEDIUM"},{"pmsName":"Seasoul Dead Sea Hydrating Serum 30ml","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSDS11 Dead Sea Hydrating Serum","matchScore":0.82,"confidence":"HIGH"},{"pmsName":"Seasoul cookies scrub","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.35,"confidence":"LOW"}],"bulkMapping":[{"pmsName":"BULK Azevita Goji  Brightening  Face Wash 100 ml","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSAZ7 Azevita Goji Brightening Face Wash","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"BULK Azevita SPF 50 Day Cream 100 ml","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSAZ4 Azevita Intense Brightening Day Cream Sachet","matchScore":0.62,"confidence":"MEDIUM"},{"pmsName":"BULK Bodycraft Rose Mask","pmsBrand":"Bodycraft","batchCount":1,"suggestedCanonical":"Bodycraft Mango Mask","matchScore":0.73,"confidence":"HIGH"},{"pmsName":"BULK Bodycraft Rose Scrub","pmsBrand":"Bodycraft","batchCount":1,"suggestedCanonical":"Bodycraft Mango Mask","matchScore":0.44,"confidence":"MEDIUM"},{"pmsName":"BULK Bodycraft Wine Mask","pmsBrand":"Bodycraft","batchCount":1,"suggestedCanonical":"Bodycraft Mango Mask","matchScore":0.73,"confidence":"HIGH"},{"pmsName":"BULK Bodycraft Wine Scrub","pmsBrand":"Bodycraft","batchCount":1,"suggestedCanonical":"Bodycraft Mango Mask","matchScore":0.46,"confidence":"MEDIUM"},{"pmsName":"BULK Cica-Lemon-Kakadu Plum D/Pigmentation Soak.","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.26,"confidence":"LOW"},{"pmsName":"BULK Dead Sea  Mani Pedi Mineral ( Dead Sea Mineral )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.39,"confidence":"LOW"},{"pmsName":"BULK Foaming Gel Cleanser Kit ( Hydra )","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"","matchScore":0.34,"confidence":"LOW"},{"pmsName":"BULK Hyphen Dual Short 50 Ml Serum","pmsBrand":"Hyphen","batchCount":16,"suggestedCanonical":"Hyphen Dual Shot Radiance Lift Serum","matchScore":0.61,"confidence":"MEDIUM"},{"pmsName":"BULK Kerasoul Backwash Economical Conditioner 5 lit","pmsBrand":"Kerasoul","batchCount":1,"suggestedCanonical":"KSNHR2 Kerasoul Scalp Rebalacning Conditioner","matchScore":0.56,"confidence":"MEDIUM"},{"pmsName":"BULK Korean Powder Enzyme Cleanser Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"Korean Rice Water Hydrating Creme Cleanser","matchScore":0.45,"confidence":"MEDIUM"},{"pmsName":"BULK Pilgrim Argan Oil Hair Serum 100 ml","pmsBrand":"Pilgrim","batchCount":3,"suggestedCanonical":"Pilgrim Argan Oil Hair Serum 100ml","matchScore":1.0,"confidence":"HIGH"},{"pmsName":"BULK Pilgrim Argan Oil Hair Shampoo 200 ml","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim Argan Oil Hair Serum 100ml","matchScore":0.82,"confidence":"HIGH"},{"pmsName":"BULK Pilgrim Korean Rice Water Cleanup Dry Cream Exfoliator","pmsBrand":"Pilgrim","batchCount":1,"suggestedCanonical":"Korean Rice Water Nourishing Massage Cream","matchScore":0.51,"confidence":"MEDIUM"},{"pmsName":"BULK Pilgrim Korean Rice Water Cleanup Dry Toner","pmsBrand":"Pilgrim","batchCount":1,"suggestedCanonical":"Korean Rice Water Hydrating Toner","matchScore":0.62,"confidence":"MEDIUM"},{"pmsName":"BULK Pilgrim Patua & Keratin Hair Mask 200 ml","pmsBrand":"Pilgrim","batchCount":10,"suggestedCanonical":"Pilgrim Patua & Keratin Smoothing Hair Mask 200gm","matchScore":0.86,"confidence":"HIGH"},{"pmsName":"BULK Pilgrim Patua Oil Hair Serum 100 ml","pmsBrand":"Pilgrim","batchCount":3,"suggestedCanonical":"Pilgrim Argan Oil Hair Serum 100ml","matchScore":0.84,"confidence":"HIGH"},{"pmsName":"BULK Pilgrim Volcanic Lava Ash Cleanup Oily Gel Toner","pmsBrand":"Pilgrim","batchCount":1,"suggestedCanonical":"Korean Volcanic Lava Ash Pore-Tightening Gel Toner","matchScore":0.64,"confidence":"MEDIUM"},{"pmsName":"BULK Pilgrim White Lotus Mist & Toner 100 ml","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim White Lotus Natural Face Mist & Toner 100ml","matchScore":0.78,"confidence":"HIGH"},{"pmsName":"BULK Pilgrim White Lotus SPF 50 Day Cream 100 ml","pmsBrand":"Pilgrim","batchCount":2,"suggestedCanonical":"Pilgrim White Lotus Natural Day Cream SPF 50 100gm","matchScore":0.83,"confidence":"HIGH"},{"pmsName":"BULK Seasoul 100 % Mud Mask Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.42,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul 3In1 Facial Polish Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.64,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul AHA Body Peel Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.5,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul American Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.54,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Aqua Candle Massage Cream kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.42,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Butter Bath Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.56,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Butter Cream Cleanser kit ( Deadsea )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.38,"confidence":"LOW"},{"pmsName":"BULK Seasoul Butter cream Cleansing  Powder(vitamin C)","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.27,"confidence":"LOW"},{"pmsName":"BULK Seasoul Cica Gel SPF 30 Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.45,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Coco Coffee Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.44,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Cookies Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.53,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Cup Cake Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.55,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Cutical Cream Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.56,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul D-Tan Cream Hydrogen Peroxide Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.42,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Deep Tissue Massage Cream Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.41,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Dual Shot Ampoule Powder - Hyaluronic Acid","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.32,"confidence":"LOW"},{"pmsName":"BULK Seasoul Dual Shot Ampoule Serum - Hyaluronic Acid","pmsBrand":"Seasoul","batchCount":3,"suggestedCanonical":"Hyphen Dual Shot Radiance Lift Serum","matchScore":0.41,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Exfoliating Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.53,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Foaming Gel Cleanser Base Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.41,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Foaming Gel Cleanser Mint Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.41,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Foaming Gel Cleanser Watermelon Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"","matchScore":0.39,"confidence":"LOW"},{"pmsName":"BULK Seasoul Foaming Gel Licorice Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.47,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Geothermal Mask ( Brown ) Chocolate","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.27,"confidence":"LOW"},{"pmsName":"BULK Seasoul Geothermal Mask ( Whitening ) Niacinamide","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.26,"confidence":"LOW"},{"pmsName":"BULK Seasoul Geothermal Mask Pink Kits","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.34,"confidence":"LOW"},{"pmsName":"BULK Seasoul Hydra Facial Peptide Gel","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.67,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Hydra Tonning Gel Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.66,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Hydrating Lotion Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.59,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Korean Sheet Mask Kit ( Activator Serum )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP41 SeaSoul Hydra Facial Serum Kit (Pack of 4)","matchScore":0.4,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Lip Lightening Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.43,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Mani Pedi Mineral Dip ( Deadsea )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.3,"confidence":"LOW"},{"pmsName":"BULK Seasoul Massage Cream Kit","pmsBrand":"Seasoul","batchCount":3,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.56,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Massage Yogurt Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.52,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Moisturising Mask kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.51,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Peel Off Mineral Powder Chamomile Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.35,"confidence":"LOW"},{"pmsName":"BULK Seasoul Peel Off Mineral Powder Collagen","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.31,"confidence":"LOW"},{"pmsName":"BULK Seasoul Peel Off Mineral Powder Curcumin Mango","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.31,"confidence":"LOW"},{"pmsName":"BULK Seasoul SPF 50 Day Cream Kit","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"Pilgrim White Lotus Natural Day Cream SPF 50 100gm","matchScore":0.47,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Tan Removal Charcoal Scrub Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.41,"confidence":"MEDIUM"},{"pmsName":"BULK Seasoul Under Eye Lightening Gel Kit","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSSP37 SeaSoul Hydra Facial  Kit","matchScore":0.43,"confidence":"MEDIUM"},{"pmsName":"BULK seasoul deadsea hydrating serum 30ml","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"SSDS11 Dead Sea Hydrating Serum","matchScore":0.63,"confidence":"MEDIUM"},{"pmsName":"Bulk Seasoul Hydrating Massage Cream","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"Korean Rice Water Nourishing Massage Cream","matchScore":0.44,"confidence":"MEDIUM"},{"pmsName":"Dual Shot Ampoule Serum Base  - Ethyl Ascorbic Acid","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.37,"confidence":"LOW"},{"pmsName":"Dual Shot Ampoule Serum Base ( Active ) Retinol","pmsBrand":"Seasoul","batchCount":2,"suggestedCanonical":"","matchScore":0.37,"confidence":"LOW"},{"pmsName":"Dual Shot Ampoule Serum Base ( Non-Active ) Retinol Water Base","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.33,"confidence":"LOW"},{"pmsName":"Dual Shot Ampoule Serum Base ( Powder ) Ethyl Ascorbic Acid","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.32,"confidence":"LOW"},{"pmsName":"Dual Shot Ampoule Serum Base (Powder)- Niacinamide","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"Hyphen Dual Shot Radiance Lift Serum","matchScore":0.42,"confidence":"MEDIUM"},{"pmsName":"Dual Shot Ampoule Serum Base (Serum)- Niacinamide","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"Hyphen Dual Shot Radiance Lift Serum","matchScore":0.43,"confidence":"MEDIUM"},{"pmsName":"Pilgrim Volcanic Lava Ash Exfoliator Oily","pmsBrand":"Pilgrim","batchCount":1,"suggestedCanonical":"Pilgrim Volcanic Lava Ash Face Wash 100ml","matchScore":0.69,"confidence":"MEDIUM"},{"pmsName":"Seasoul Foamy Gel Cleanser ( Hyaluronic )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.33,"confidence":"LOW"},{"pmsName":"Seasoul Foamy Gel Cleanser ( Salicylic Acid )","pmsBrand":"Seasoul","batchCount":1,"suggestedCanonical":"","matchScore":0.3,"confidence":"LOW"}],"canonicalList":["SSAZ1 Azevita Brightening Facial Polish","SSAZ2 Azevita Concentrate Multivitamin Potion","SSAZ3 Azevita Curcumin-Pawpaw Body Yogurt","SSAZ4 Azevita Intense Brightening Day Cream Sachet","SSAZ5 Azevita Foaming Butter Body Wash","SSAZ6 Azevita Foaming Butter Body Scrub","SSAZ7 Azevita Goji Brightening Face Wash","SSAZ16 Azevita Goji Hydra Brightening Mask","SSAZ8 Azevita Intense Brightening Day Cream","SSAZ9 Azevita Intensive Brightening Face Toner","SSAZ10 Azevita Intensive Lightening Eye Serum","SSAZ11 Azevita Magic Recovery Butter Balm","SSAZ12 Azevita Night Serum/Recovery Elixir","SSAZ13 Azevita Shea-Coco Body Butter","SSAZ14 Azevita Ultra Light UV Defense Suncreen SPF 50 Sachet","SSAZ15 Azevita Ultra Light UV Defense Suncreen SPF 50","SSDS1 Dead Sea Minerals- Face Moistuizer Sachet","SSDS2 Dead Sea Minerals- AHA Form Cleanser","SSDS3 Dead Sea Minerals- Face Moistuizer","SSDS4 Dead Sea Minerals-Night Cream","SSDS5 Dead Sea Minerals- Oil Free Hydrator","SSDS6 Dead Sea Minerals-PHA Face Toner","SSDS7 Dead Sea Minerals-Skin Clarifying Serum","SSDS8 Dead Sea Minerals-Spray On Sunscreen SPF 50 PA++++","SSDS9 Dead Sea Minerals- Oil Free Hydrator Sachet","SSDS10 Dead Sea Di-Pigmentation Serum","SSDS11 Dead Sea Hydrating Serum","SSDS12 Dead Sea Pore Minimizing Serum","KSNHP1 Kerasoul Cortex Clarifying Gel","KSNHR1 Kerasoul Cryo Seal Spray","KSNHP2 Kerasoul Scalp Clarifying Shampoo","KSNHP3 Kerasoul Scalp Detox Gel","KSNHR2 Kerasoul Scalp Rebalacning Conditioner","KSNHP4 Kerasoul Scalp Rebalacning Hair Mask","KSNHR3 Kerasoul Scalp Rebalancing Serum","KSNHR5 Kerasoul Scalp Shampoo","KSNHP6 KeraSoul Treatment Backwash Detox Activator Conditioner V2.0 Can","KSNHP7 KeraSoul Treatment Backwash Detox Activator Shampoo V2.0 Can","SSSP1 100 % Natural Dead Sea Mud Bath Salt Soak","SSSP2 100 % Natural Dead Sea Mud Body Wrap","SSSP3 Basic Organic Clean up - Acne Skin","SSSP4 Basic Organic Clean up - Dry Skin","SSSP5 Basic Organic Clean up - Oily Skin","SSSP6 Basic Organic Mani- Pedi","SSSP7 Bombshell High Tea Mani- Pedi","SSSP8 Brazilian Skin Lightening Clean Up","SSSP9 Bridal De-Tan Sachet","SSSP10 Bridal Glow De-Tan Cream","SSSP11 Candle Spa Mani-Pedi","SSSP12 CC Derma Ice Facial - Acne cure","SSSP45 CC Derma Ice Facial - Instant Glow","SSSP13 CC Derma Ice Facial - Tightening","SSSP14 Chocolate Mint Facial - All Skin Types","SSSP15 Choco Mint Mani-Pedi","SSSP16 CRYO Red Carpet DNA Facial -  Anti Ageing","SSSP17 CRYO Red Carpet DNA Facial -  D/Pigmentation","SSSP18 CRYO Red Carpet DNA Facial -  Pore Minimizing","SSSP19 Dead Sea Anti-Tan Mani-Pedi","SSSP20 Dead Sea Facial - Acne Prone","SSSP21 Dead Sea Facial - Anti Ageing","SSSP22 Dead Sea Facial - Dry Skin","SSSP23 Dead Sea Facial - Oily Skin","SSSP24 Dry/Wet Mani Pedi","SSSP25 Gold Moroccan VitC Facial - Anti Ageing","SSSP26 Gold Moroccan VitC Facial - Dry Skin","SSSP27 Gold Moroccan VitC Facial - Oily Skin","SSSP28 Korean Glass Facial Kit","SSSP29 Sweet Passion Massage Candle","SSSP30 Zesty Temptation  Massage Candle","SSSP31 Single Use Zesty Temptation  Massage Candle","SSSP32 Organic Body Spa","SSSP33 Peel-Off Mask Charcoal-4","SSSR1 Peel-Off Mask Activated Charcoal","SSSP34 Peel-Off Mask Anti Ageing-4","SSSR2 Peel-Off Mask Anti Ageing","SSSP35 Peel-Off Mask Vitamin C-4","SSSR3 Peel-Off Mask Vitamin C","SSSP36 Pure Moist Facial","SSSP1 Pure Pore Facial","SSSP37 SeaSoul Hydra Facial  Kit","SSSP38 SeaSoul Hydra Facial Serum AO3","SSSP39 SeaSoul Hydra Facial Serum AS1","SSSP40 SeaSoul Hydra Facial Serum Detan SAP","SSSP41 SeaSoul Hydra Facial Serum Kit (Pack of 4)","SSSP42 SeaSoul Hydra Facial Serum SA2","SSSP43 Single Use Massage Candle","SSSP44 Single Use Scrub Candle","SSSR4 Bridal Monodose DeTan","Hyphen Dual Shot Radiance Lift Serum","Pilgrim White Lotus Natural Face Mist & Toner 100ml","Pilgrim Argan Oil Hair Mask 200gm","Pilgrim Volcanic Lava Ash Face Scrub 100gm","Pilgrim White Lotus Natural Day Cream SPF 50 100gm","Pilgrim Volcanic Lava Ash Face Wash 100ml","Pilgrim Sulfate Free Shampoo 200ml","Pilgrim Argan Oil Hair Serum 100ml","Pilgrim Patua & Keratin Smoothing Hair Mask 200gm","Pilgrim Patua & Keratin Smoothing Hair Conditioner 200gm","Pilgrim Patua & Hyaluronic Acid Intense Hydration & Frizz Control Smoothening Hair Serum 100ml","Pilgrim Professional DeTan (New Formulation) 450gm","Pilgrim Professional Patua & Keratin Smoothing Hair Mask 450gm","Pilgrim Professional Silk Pro  Hair Serum 100ml","Pilgrim Professional Slik Pro Hair Mask 200gm","Pilgrim Jeju Sulfate Free Shampoo","Korean Rice Water Hydrating Creme Cleanser","Korean Rice Water Moisturizing Creme Scrub","Korean Rice Water Hydrating Toner","Korean Rice Water Nourishing Massage Cream","Korean Rice Water Brightening Face Mask","Korean Volcanic Lava Ash Detox Gel Cleanser","Korean Volcanic Lava Ash Exfoliating Gel Scrub","Korean Volcanic Lava Ash Pore-Tightening Gel Toner","Korean Volcanic Lava Ash Revitalizing Massage Cream","Korean Volcanic Lava Ash Detox Clay Mask","Pilgrim White Lotus Natural Face Mist & Toner -Miniature 30ml","Pilgrim Professional DeTan (New Formulation) 8gm","Skinvest Body&Face Spray","Wiselife yoga mat detox lemongrass","XYST Face Mask","XYST Under Eye Cream (15ml)","XYST Under Eye Cream (30ml)","Xyst foam face wash","Bodycraft Mango Mask","Cherry Exfoliator","Cherry Mask","Mango exfoliator"],"canonicalWithMeta":[{"name":"SSAZ1 Azevita Brightening Facial Polish","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ2 Azevita Concentrate Multivitamin Potion","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ3 Azevita Curcumin-Pawpaw Body Yogurt","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ4 Azevita Intense Brightening Day Cream Sachet","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ5 Azevita Foaming Butter Body Wash","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ6 Azevita Foaming Butter Body Scrub","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ7 Azevita Goji Brightening Face Wash","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ16 Azevita Goji Hydra Brightening Mask","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ8 Azevita Intense Brightening Day Cream","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ9 Azevita Intensive Brightening Face Toner","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ10 Azevita Intensive Lightening Eye Serum","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ11 Azevita Magic Recovery Butter Balm","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ12 Azevita Night Serum/Recovery Elixir","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ13 Azevita Shea-Coco Body Butter","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ14 Azevita Ultra Light UV Defense Suncreen SPF 50 Sachet","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSAZ15 Azevita Ultra Light UV Defense Suncreen SPF 50","brand":"SeaSoul","subBrand":"Azevita"},{"name":"SSDS1 Dead Sea Minerals- Face Moistuizer Sachet","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS2 Dead Sea Minerals- AHA Form Cleanser","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS3 Dead Sea Minerals- Face Moistuizer","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS4 Dead Sea Minerals-Night Cream","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS5 Dead Sea Minerals- Oil Free Hydrator","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS6 Dead Sea Minerals-PHA Face Toner","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS7 Dead Sea Minerals-Skin Clarifying Serum","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS8 Dead Sea Minerals-Spray On Sunscreen SPF 50 PA++++","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS9 Dead Sea Minerals- Oil Free Hydrator Sachet","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS10 Dead Sea Di-Pigmentation Serum","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS11 Dead Sea Hydrating Serum","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"SSDS12 Dead Sea Pore Minimizing Serum","brand":"SeaSoul","subBrand":"DeadSea"},{"name":"KSNHP1 Kerasoul Cortex Clarifying Gel","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHR1 Kerasoul Cryo Seal Spray","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHP2 Kerasoul Scalp Clarifying Shampoo","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHP3 Kerasoul Scalp Detox Gel","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHR2 Kerasoul Scalp Rebalacning Conditioner","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHP4 Kerasoul Scalp Rebalacning Hair Mask","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHR3 Kerasoul Scalp Rebalancing Serum","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHR5 Kerasoul Scalp Shampoo","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHP6 KeraSoul Treatment Backwash Detox Activator Conditioner V2.0 Can","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"KSNHP7 KeraSoul Treatment Backwash Detox Activator Shampoo V2.0 Can","brand":"SeaSoul","subBrand":"KeraSoul"},{"name":"SSSP1 100 % Natural Dead Sea Mud Bath Salt Soak","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP2 100 % Natural Dead Sea Mud Body Wrap","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP3 Basic Organic Clean up - Acne Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP4 Basic Organic Clean up - Dry Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP5 Basic Organic Clean up - Oily Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP6 Basic Organic Mani- Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP7 Bombshell High Tea Mani- Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP8 Brazilian Skin Lightening Clean Up","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP9 Bridal De-Tan Sachet","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP10 Bridal Glow De-Tan Cream","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP11 Candle Spa Mani-Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP12 CC Derma Ice Facial - Acne cure","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP45 CC Derma Ice Facial - Instant Glow","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP13 CC Derma Ice Facial - Tightening","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP14 Chocolate Mint Facial - All Skin Types","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP15 Choco Mint Mani-Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP16 CRYO Red Carpet DNA Facial -  Anti Ageing","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP17 CRYO Red Carpet DNA Facial -  D/Pigmentation","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP18 CRYO Red Carpet DNA Facial -  Pore Minimizing","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP19 Dead Sea Anti-Tan Mani-Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP20 Dead Sea Facial - Acne Prone","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP21 Dead Sea Facial - Anti Ageing","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP22 Dead Sea Facial - Dry Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP23 Dead Sea Facial - Oily Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP24 Dry/Wet Mani Pedi","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP25 Gold Moroccan VitC Facial - Anti Ageing","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP26 Gold Moroccan VitC Facial - Dry Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP27 Gold Moroccan VitC Facial - Oily Skin","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP28 Korean Glass Facial Kit","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP29 Sweet Passion Massage Candle","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP30 Zesty Temptation  Massage Candle","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP31 Single Use Zesty Temptation  Massage Candle","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP32 Organic Body Spa","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP33 Peel-Off Mask Charcoal-4","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSR1 Peel-Off Mask Activated Charcoal","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP34 Peel-Off Mask Anti Ageing-4","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSR2 Peel-Off Mask Anti Ageing","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP35 Peel-Off Mask Vitamin C-4","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSR3 Peel-Off Mask Vitamin C","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP36 Pure Moist Facial","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP1 Pure Pore Facial","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP37 SeaSoul Hydra Facial  Kit","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP38 SeaSoul Hydra Facial Serum AO3","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP39 SeaSoul Hydra Facial Serum AS1","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP40 SeaSoul Hydra Facial Serum Detan SAP","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP41 SeaSoul Hydra Facial Serum Kit (Pack of 4)","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP42 SeaSoul Hydra Facial Serum SA2","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP43 Single Use Massage Candle","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSP44 Single Use Scrub Candle","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"SSSR4 Bridal Monodose DeTan","brand":"SeaSoul","subBrand":"SeaSoul"},{"name":"Hyphen Dual Shot Radiance Lift Serum","brand":"Hyphen","subBrand":"Hyphen"},{"name":"Pilgrim White Lotus Natural Face Mist & Toner 100ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Argan Oil Hair Mask 200gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Volcanic Lava Ash Face Scrub 100gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim White Lotus Natural Day Cream SPF 50 100gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Volcanic Lava Ash Face Wash 100ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Sulfate Free Shampoo 200ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Argan Oil Hair Serum 100ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Patua & Keratin Smoothing Hair Mask 200gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Patua & Keratin Smoothing Hair Conditioner 200gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Patua & Hyaluronic Acid Intense Hydration & Frizz Control Smoothening Hair Serum 100ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Professional DeTan (New Formulation) 450gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Professional Patua & Keratin Smoothing Hair Mask 450gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Professional Silk Pro  Hair Serum 100ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Professional Slik Pro Hair Mask 200gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Jeju Sulfate Free Shampoo","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Rice Water Hydrating Creme Cleanser","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Rice Water Moisturizing Creme Scrub","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Rice Water Hydrating Toner","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Rice Water Nourishing Massage Cream","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Rice Water Brightening Face Mask","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Volcanic Lava Ash Detox Gel Cleanser","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Volcanic Lava Ash Exfoliating Gel Scrub","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Volcanic Lava Ash Pore-Tightening Gel Toner","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Volcanic Lava Ash Revitalizing Massage Cream","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Korean Volcanic Lava Ash Detox Clay Mask","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim White Lotus Natural Face Mist & Toner -Miniature 30ml","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Pilgrim Professional DeTan (New Formulation) 8gm","brand":"Pilgrim","subBrand":"Pilgrim"},{"name":"Skinvest Body&Face Spray","brand":"Skinvest","subBrand":"Skinvest"},{"name":"Wiselife yoga mat detox lemongrass","brand":"Wiselife","subBrand":"Wiselife"},{"name":"XYST Face Mask","brand":"XYST","subBrand":"XYST"},{"name":"XYST Under Eye Cream (15ml)","brand":"XYST","subBrand":"XYST"},{"name":"XYST Under Eye Cream (30ml)","brand":"XYST","subBrand":"XYST"},{"name":"Xyst foam face wash","brand":"XYST","subBrand":"XYST"},{"name":"Bodycraft Mango Mask","brand":"Bodycraft","subBrand":"Bodycraft"},{"name":"Cherry Exfoliator","brand":"Bodycraft","subBrand":"Bodycraft"},{"name":"Cherry Mask","brand":"Bodycraft","subBrand":"Bodycraft"},{"name":"Mango exfoliator","brand":"Bodycraft","subBrand":"Bodycraft"}]}</script>
+
+<script>
+var db, auth, currentUser, currentRole;
+var productionData = { bulk: [], fp: [] };
+var reconciliationData = null;
+var userChoices = {};  // { pmsName: { newName: '...', skip: false } }
+var alreadyApplied = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Load embedded reconciliation suggestions
+  try {
+    var seed = document.getElementById('recon-data');
+    reconciliationData = JSON.parse(seed.textContent);
+    console.log('[RENAME] Reconciliation data loaded:', reconciliationData);
+  } catch(e) {
+    console.error('[RENAME] Failed to parse recon data:', e);
+    reconciliationData = { fgMapping: [], bulkMapping: [], canonicalList: [] };
+  }
+
+  if (typeof firebase === 'undefined') {
+    document.getElementById('login-err').textContent = 'Firebase failed to load';
+    return;
+  }
+  firebase.initializeApp(window.FIREBASE_CONFIG);
+  db = firebase.firestore();
+  auth = firebase.auth();
+  auth.onAuthStateChanged(function(user) {
+    if (user) onLoggedIn(user);
+    else showLogin();
+  });
+});
+
+function showLogin() {
+  document.getElementById('login-card').classList.remove('hidden');
+  document.getElementById('main').classList.add('hidden');
+  document.getElementById('loading-card').classList.add('hidden');
+}
+
+function doLogin() {
+  var email = document.getElementById('email').value.trim().toLowerCase();
+  var pass = document.getElementById('pass').value;
+  var err = document.getElementById('login-err');
+  if (!email || !pass) { err.textContent = 'Email and password required'; return; }
+  err.textContent = '';
+  document.getElementById('login-btn').disabled = true;
+  auth.signInWithEmailAndPassword(email, pass).catch(function(e) {
+    err.textContent = 'Sign-in failed: ' + (e.code === 'auth/invalid-credential' ? 'wrong email or password' : e.message);
+    document.getElementById('login-btn').disabled = false;
+  });
+}
+
+function doLogout() {
+  auth.signOut().then(function() { window.location.reload(); });
+}
+
+function onLoggedIn(user) {
+  currentUser = user;
+  currentRole = window.RENAME_ROLE_MAP[user.email.toLowerCase()];
+  if (!currentRole) {
+    document.getElementById('login-err').textContent = 'No access for ' + user.email;
+    auth.signOut();
+    return;
+  }
+  document.getElementById('login-card').classList.add('hidden');
+  document.getElementById('loading-card').classList.remove('hidden');
+  document.getElementById('user-email').textContent = user.email;
+  document.getElementById('user-role').textContent = currentRole;
+  loadProductionData();
+}
+
+function loadProductionData() {
+  db.collection('production').doc('data').get().then(function(snap) {
+    if (!snap.exists) {
+      document.getElementById('loading-card').innerHTML = '<div style="color:var(--bad)">production/data does not exist!</div>';
+      return;
+    }
+    var data = snap.data();
+    productionData = { bulk: data.bulk || [], fp: data.fp || [], _full: data };
+    console.log('[RENAME] FP records:', productionData.fp.length, 'Bulk:', productionData.bulk.length);
+
+    // Check if already applied — look for _fgRenameApplied flag
+    alreadyApplied = !!data._fgRenameApplied;
+
+    // Initialize user choices with the auto-suggestions
+    reconciliationData.fgMapping.forEach(function(m) {
+      userChoices[m.pmsName] = {
+        newName: m.suggestedCanonical || m.pmsName,
+        skip: false,
+        confidence: m.confidence
+      };
+    });
+
+    document.getElementById('loading-card').classList.add('hidden');
+    document.getElementById('main').classList.remove('hidden');
+    render();
+  }).catch(function(e) {
+    document.getElementById('loading-card').innerHTML = '<div style="color:var(--bad)">Load failed: ' + e.message + '</div>';
+  });
+}
+
+function render() {
+  renderKPIs();
+  renderBanner();
+  renderRenameList();
+  renderActionArea();
+}
+
+function renderKPIs() {
+  var fgRows = reconciliationData.fgMapping || [];
+  var willRename = fgRows.filter(function(m) {
+    var c = userChoices[m.pmsName];
+    return c && !c.skip && c.newName && c.newName !== m.pmsName;
+  });
+  var willSkip = fgRows.filter(function(m) {
+    var c = userChoices[m.pmsName];
+    return c && (c.skip || !c.newName || c.newName === m.pmsName);
+  });
+  var totalBatchAffected = willRename.reduce(function(sum, m) { return sum + m.batchCount; }, 0);
+
+  document.getElementById('kpi-area').innerHTML = '<div class="kpi-row">' +
+    '<div class="kpi info"><div class="kpi-val">' + fgRows.length + '</div><div class="kpi-label">Unique FGs in PMS</div></div>' +
+    '<div class="kpi good"><div class="kpi-val">' + willRename.length + '</div><div class="kpi-label">Will rename</div></div>' +
+    '<div class="kpi warn"><div class="kpi-val">' + willSkip.length + '</div><div class="kpi-label">Will skip / unchanged</div></div>' +
+    '<div class="kpi"><div class="kpi-val">' + totalBatchAffected + '</div><div class="kpi-label">FP batches affected</div></div>' +
+  '</div>';
+}
+
+function renderBanner() {
+  var area = document.getElementById('banner-area');
+  if (alreadyApplied) {
+    area.innerHTML = '<div class="banner good">✓ FG rename was already applied. Re-running will overwrite previous changes.</div>';
+  } else {
+    var lowCount = (reconciliationData.fgMapping || []).filter(function(m) { return m.confidence === 'LOW'; }).length;
+    var medCount = (reconciliationData.fgMapping || []).filter(function(m) { return m.confidence === 'MEDIUM'; }).length;
+    if (lowCount + medCount > 0) {
+      area.innerHTML = '<div class="banner warn">⚠ ' + lowCount + ' LOW and ' + medCount + ' MEDIUM confidence matches need review. Verify each row before applying.</div>';
+    } else {
+      area.innerHTML = '<div class="banner info">All matches are HIGH confidence. Review the proposals below and apply.</div>';
+    }
+  }
+}
+
+function renderRenameList() {
+  var list = document.getElementById('rename-list');
+  var fgRows = reconciliationData.fgMapping || [];
+  var canonicalList = (reconciliationData.canonicalWithMeta || []).map(function(c) { return c.name; });
+
+  var html = '<div class="card"><h3 style="font-size:14px;margin-bottom:14px">Review each rename</h3>';
+  fgRows.forEach(function(m, idx) {
+    var choice = userChoices[m.pmsName] || { newName: m.suggestedCanonical, skip: false };
+    var optionsHtml = '<option value="">— No change / skip —</option>';
+    canonicalList.forEach(function(c) {
+      var sel = c === choice.newName ? ' selected' : '';
+      optionsHtml += '<option value="' + escAttr(c) + '"' + sel + '>' + escHtml(c) + '</option>';
+    });
+
+    html += '<div class="row">';
+    html += '<div class="row-hdr">';
+    html += '<div>';
+    html += '<div class="row-current"><span class="mono" style="color:var(--accent)">[' + escHtml(m.pmsBrand) + ']</span> ' + escHtml(m.pmsName) + '</div>';
+    html += '<div class="row-meta">' + m.batchCount + ' FP batch' + (m.batchCount !== 1 ? 'es' : '') + ' use this name · auto-match score ' + m.matchScore + '</div>';
+    html += '</div>';
+    html += '<span class="confidence-pill confidence-' + m.confidence + '">' + m.confidence + '</span>';
+    html += '</div>';
+
+    html += '<div class="action-row">';
+    html += '<div class="action-label">Rename to →</div>';
+    html += '<select onchange="updateChoice(' + idx + ', this.value)">' + optionsHtml + '</select>';
+    html += '</div>';
+
+    html += '<div class="skip-toggle"><input type="checkbox" id="skip-' + idx + '" ' + (choice.skip ? 'checked' : '') + ' onchange="updateSkip(' + idx + ', this.checked)"/><label for="skip-' + idx + '">Skip this row (keep current PMS name)</label></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+function updateChoice(idx, newName) {
+  var pmsName = reconciliationData.fgMapping[idx].pmsName;
+  if (!userChoices[pmsName]) userChoices[pmsName] = {};
+  userChoices[pmsName].newName = newName;
+  userChoices[pmsName].skip = !newName;  // empty means skip
+  renderKPIs();
+}
+
+function updateSkip(idx, skip) {
+  var pmsName = reconciliationData.fgMapping[idx].pmsName;
+  if (!userChoices[pmsName]) userChoices[pmsName] = {};
+  userChoices[pmsName].skip = skip;
+  renderKPIs();
+}
+
+function renderActionArea() {
+  var area = document.getElementById('action-area');
+  var fgRows = reconciliationData.fgMapping || [];
+  var willRename = fgRows.filter(function(m) {
+    var c = userChoices[m.pmsName];
+    return c && !c.skip && c.newName && c.newName !== m.pmsName;
+  });
+
+  var html = '<div class="card" style="background:var(--panel-2)">';
+  html += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">';
+  html += '<button class="primary" onclick="confirmApply()" ' + (willRename.length === 0 ? 'disabled' : '') + ' style="font-size:13px;padding:9px 18px">';
+  html += '⚡ Apply ' + willRename.length + ' rename' + (willRename.length !== 1 ? 's' : '');
+  html += '</button>';
+  html += '<button onclick="downloadPreview()">📥 Download preview CSV</button>';
+  html += '<div style="flex:1;text-align:right;font-size:11px;color:var(--ink-3)">Each rename updates <code>production/data.fp[].sku</code> for matching batches.</div>';
+  html += '</div></div>';
+  area.innerHTML = html;
+}
+
+function confirmApply() {
+  var willRename = (reconciliationData.fgMapping || []).filter(function(m) {
+    var c = userChoices[m.pmsName];
+    return c && !c.skip && c.newName && c.newName !== m.pmsName;
+  });
+  if (willRename.length === 0) return;
+
+  var msg = 'Apply ' + willRename.length + ' rename(s) to PMS production records?\n\n';
+  willRename.forEach(function(m) {
+    msg += '• ' + m.pmsName + '\n  → ' + userChoices[m.pmsName].newName + '\n  (' + m.batchCount + ' batch' + (m.batchCount !== 1 ? 'es' : '') + ')\n\n';
+  });
+  msg += 'This is reversible via audit log. Continue?';
+
+  if (!confirm(msg)) return;
+  applyRename(willRename);
+}
+
+function applyRename(willRename) {
+  // Build rename map
+  var renameMap = {};
+  willRename.forEach(function(m) {
+    renameMap[m.pmsName] = userChoices[m.pmsName].newName;
+  });
+
+  // Snapshot original for audit
+  var originalFP = JSON.parse(JSON.stringify(productionData.fp));
+
+  // Apply renames to fp array
+  var renamedCount = 0;
+  var newFP = productionData.fp.map(function(record) {
+    if (record.sku && renameMap[record.sku]) {
+      var newRecord = Object.assign({}, record, {
+        sku: renameMap[record.sku],
+        _previousSku: record.sku,
+        _renamedTs: Date.now(),
+        _renamedBy: currentUser.email
+      });
+      renamedCount++;
+      return newRecord;
+    }
+    return record;
+  });
+
+  // Build new production data — preserve everything else
+  var newProductionData = Object.assign({}, productionData._full || {}, {
+    fp: newFP,
+    _fgRenameApplied: true,
+    _fgRenameAppliedTs: Date.now(),
+    _fgRenameAppliedBy: currentUser.email
+  });
+
+  // Atomic write: production data + audit log
+  var batch = db.batch();
+  batch.set(db.collection('production').doc('data'), newProductionData);
+  batch.set(db.collection('rename_audit').doc(String(Date.now())), {
+    ts: Date.now(),
+    by: currentUser.email,
+    role: currentRole,
+    type: 'FG_BATCH_RENAME',
+    renameMap: renameMap,
+    affectedRecords: renamedCount,
+    snapshotFP: originalFP.filter(function(r) { return r.sku && renameMap[r.sku]; }).map(function(r) {
+      return { sku: r.sku, batch_no: r.batch_no, date: r.date, brand: r.brand };
+    })
+  });
+
+  batch.commit().then(function() {
+    alert('Successfully renamed ' + renamedCount + ' FP records!\n\n' +
+      'Affected ' + Object.keys(renameMap).length + ' unique FG names.\n\n' +
+      'Audit log written. You can now close this tool.');
+    alreadyApplied = true;
+    productionData.fp = newFP;
+    productionData._full = newProductionData;
+    render();
+  }).catch(function(e) {
+    alert('Rename failed: ' + e.message);
+    console.error(e);
+  });
+}
+
+function downloadPreview() {
+  var rows = (reconciliationData.fgMapping || []).map(function(m) {
+    var c = userChoices[m.pmsName] || {};
+    return {
+      pmsName: m.pmsName,
+      brand: m.pmsBrand,
+      batchCount: m.batchCount,
+      proposedNewName: c.newName || '',
+      skip: c.skip ? 'YES' : '',
+      confidence: m.confidence,
+      matchScore: m.matchScore
+    };
+  });
+  var headers = ['pmsName', 'brand', 'batchCount', 'proposedNewName', 'skip', 'confidence', 'matchScore'];
+  var csv = headers.join(',') + '\n';
+  rows.forEach(function(r) {
+    csv += headers.map(function(h) {
+      var v = String(r[h] == null ? '' : r[h]);
+      return v.indexOf(',') > -1 || v.indexOf('"') > -1 ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }).join(',') + '\n';
+  });
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fg_rename_preview.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 100);
+}
+
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function escAttr(s) { return escHtml(s).replace(/'/g, '&#39;'); }
+</script>
+</body>
+</html>
