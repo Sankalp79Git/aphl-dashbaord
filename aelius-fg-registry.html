@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeliusParallel · FG Registry</title>
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDOkvXJMpIShul_WJV8Sj8WbIkOn6U5iMc",
+  authDomain:        "aphl-pms-dashboard.firebaseapp.com",
+  projectId:         "aphl-pms-dashboard",
+  storageBucket:     "aphl-pms-dashboard.firebasestorage.app",
+  messagingSenderId: "306613784090",
+  appId:             "1:306613784090:web:9f6909175b9da4db08cba3"
+};
+window.REGISTRY_ROLE_MAP = {
+  "sankalp.chopra@aeliusparallel.com":    "FOUNDERS",
+  "anurag.kumar@aeliusparallel.com":      "PMS_EDITOR",
+  "mis@seasoulcosmetics.com":             "PMS_EDITOR",
+  "singh.diksha@aeliusparallel.com":      "PMS_EDITOR",
+  "sopso@seasoulcosmetics.com":           "READONLY"
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0a0e1a;--bg-2:#0f1421;--panel:#131829;--panel-2:#1a2034;
+  --line:rgba(255,255,255,0.08);--ink:#e5e9f0;--ink-2:#9ba3b4;--ink-3:#5d6478;
+  --accent:#d4ff3a;--accent-2:#a685ff;--good:#5dd39e;--warn:#ffb83a;--bad:#ff6b6b;
+  --shadow:0 6px 24px rgba(0,0,0,0.4)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:13px;line-height:1.5}
+.hidden{display:none !important}
+.mono{font-family:'SF Mono',Monaco,monospace}
+button{font-family:inherit;border-radius:5px;font-size:12px;padding:7px 12px;
+  background:var(--panel-2);color:var(--ink);border:1px solid var(--line);cursor:pointer}
+button:hover:not(:disabled){background:var(--panel)}
+button:disabled{opacity:0.4;cursor:not-allowed}
+button.primary{background:var(--accent);color:var(--bg);border:none;font-weight:600}
+button.primary:hover:not(:disabled){background:#c4ef2a}
+button.danger{background:var(--bad);color:white;border:none}
+input,select,textarea{font-family:inherit;background:var(--bg-2);color:var(--ink);
+  border:1px solid var(--line);padding:7px 10px;font-size:12px;border-radius:4px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+label{font-size:10px;color:var(--ink-2);text-transform:uppercase;
+  letter-spacing:0.05em;display:block;margin-bottom:4px}
+textarea{resize:vertical;min-height:60px}
+
+#login-screen{position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-card{background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:36px 32px;width:380px;box-shadow:var(--shadow)}
+.login-logo{font-size:11px;color:var(--accent);letter-spacing:0.15em;
+  text-transform:uppercase;margin-bottom:8px}
+.login-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--ink-2);margin-bottom:24px}
+.login-input{margin-bottom:12px;padding:10px 12px;font-size:13px}
+.login-btn{width:100%;padding:11px;font-size:13px;font-weight:600;
+  background:var(--accent);color:var(--bg);border:none;border-radius:5px;cursor:pointer;margin-top:8px}
+.login-err{color:var(--bad);font-size:11px;margin-top:10px;min-height:14px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid currentColor;
+  border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;
+  vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.header{display:flex;align-items:center;padding:14px 22px;
+  background:var(--panel);border-bottom:1px solid var(--line);gap:16px}
+.brand-mark{width:32px;height:32px;background:var(--accent);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:var(--bg);font-size:14px}
+.brand-text .name{font-weight:600;font-size:13px}
+.brand-text .sub{font-size:10px;color:var(--ink-3);letter-spacing:0.05em;text-transform:uppercase}
+.tabs{display:flex;gap:2px;flex:1;margin-left:28px}
+.tab{padding:7px 14px;font-size:12px;color:var(--ink-2);cursor:pointer;border-radius:4px;position:relative}
+.tab:hover{color:var(--ink);background:var(--panel-2)}
+.tab.active{color:var(--accent);background:var(--panel-2);font-weight:500}
+.tab-badge{display:inline-block;background:var(--bad);color:white;border-radius:9px;
+  font-size:9px;font-weight:700;padding:1px 6px;margin-left:5px;min-width:16px;text-align:center}
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;margin-top:8px}
+.diff-col{padding:10px;border-radius:5px;background:var(--bg-2)}
+.diff-col.before{border-left:3px solid var(--ink-3)}
+.diff-col.after{border-left:3px solid var(--good)}
+.diff-col h5{font-size:10px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+.diff-row{display:grid;grid-template-columns:90px 1fr;gap:6px;padding:3px 0;font-size:10px}
+.diff-row .lbl{color:var(--ink-3)}
+.diff-row .val{color:var(--ink);word-break:break-word}
+.diff-row.changed .val{background:rgba(255,184,58,0.12);padding:2px 5px;border-radius:3px;color:var(--warn)}
+.proposal-card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px}
+.proposal-card.AWAITING{border-left:3px solid var(--warn)}
+.proposal-card.APPROVED{border-left:3px solid var(--good)}
+.proposal-card.REJECTED{border-left:3px solid var(--bad);opacity:0.7}
+.proposal-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px;flex-wrap:wrap}
+.proposal-meta{font-size:10px;color:var(--ink-3)}
+.proposal-meta strong{color:var(--accent)}
+.proposal-actions{display:flex;gap:6px;margin-top:10px}
+.user-chip{display:flex;align-items:center;gap:10px;
+  padding:5px 12px 5px 6px;background:var(--panel-2);border-radius:18px}
+.user-avatar{width:26px;height:26px;background:var(--accent-2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--bg);font-weight:600;font-size:11px}
+.user-info .email{font-size:11px}
+.user-info .role{font-size:9px;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase}
+.logout-btn{padding:5px 10px;font-size:10px;background:transparent;
+  border:1px solid var(--line);border-radius:4px;color:var(--ink-2)}
+
+.main{padding:22px;max-width:1400px;margin:0 auto}
+.page-title h1{font-size:20px;font-weight:600}
+.page-title .sub{font-size:12px;color:var(--ink-2);margin-top:3px;margin-bottom:18px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:12px 14px;border-left:3px solid var(--accent)}
+.kpi.good{border-left-color:var(--good)}
+.kpi.warn{border-left-color:var(--warn)}
+.kpi.info{border-left-color:var(--accent-2)}
+.kpi-val{font-size:22px;font-weight:600;line-height:1}
+.kpi-label{font-size:9px;color:var(--ink-2);text-transform:uppercase;letter-spacing:0.06em;margin-top:5px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:14px}
+.panel-hdr{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.panel-title{font-size:13px;font-weight:600}
+.panel-sub{font-size:10px;color:var(--ink-3);margin-top:2px}
+.panel-body{padding:14px 16px}
+
+.banner{padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:12px}
+.banner.info{background:rgba(166,133,255,0.08);border:1px solid rgba(166,133,255,0.3);color:var(--accent-2)}
+.banner.warn{background:rgba(255,184,58,0.08);border:1px solid rgba(255,184,58,0.3);color:var(--warn)}
+.banner.good{background:rgba(93,211,158,0.08);border:1px solid rgba(93,211,158,0.3);color:var(--good)}
+.banner.bad{background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.3);color:var(--bad)}
+
+.fg-table{width:100%;border-collapse:collapse;font-size:11px}
+.fg-table th{background:var(--bg-2);padding:8px 10px;text-align:left;
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;
+  color:var(--ink-2);position:sticky;top:0;z-index:1}
+.fg-table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.fg-table tr:hover td{background:rgba(255,255,255,0.02)}
+.table-wrap{max-height:580px;overflow:auto}
+
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.filter-bar input,.filter-bar select{width:auto}
+.filter-bar input{min-width:240px}
+
+.pill{font-size:9px;font-weight:700;text-transform:uppercase;
+  padding:2px 7px;border-radius:8px;letter-spacing:0.05em;display:inline-block}
+.pill-good{background:rgba(93,211,158,0.18);color:var(--good)}
+.pill-warn{background:rgba(255,184,58,0.18);color:var(--warn)}
+.pill-info{background:rgba(166,133,255,0.18);color:var(--accent-2)}
+.pill-muted{background:rgba(155,163,180,0.18);color:var(--ink-2)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--ink-3);font-style:italic;font-size:12px}
+.empty-icon{font-size:30px;margin-bottom:10px;color:var(--ink-3)}
+
+.import-step{padding:16px;border:1px solid var(--line);border-radius:6px;background:var(--bg-2);margin-bottom:12px}
+.import-step.active{border-color:var(--accent);background:var(--panel)}
+.import-step.done{border-color:var(--good);background:var(--panel)}
+.import-step h4{font-size:12px;margin-bottom:8px;color:var(--accent)}
+.import-step.done h4{color:var(--good)}
+
+.col-mapping{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.col-mapping label{margin-bottom:2px}
+.col-mapping select{width:100%}
+
+.preview-table{font-size:10px;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:4px}
+.preview-table table{width:100%;border-collapse:collapse}
+.preview-table th{background:var(--bg-2);padding:6px 8px;font-size:9px;text-align:left;position:sticky;top:0}
+.preview-table td{padding:5px 8px;border-bottom:1px solid var(--line)}
+
+.aliases-display{display:flex;flex-wrap:wrap;gap:4px}
+.alias-chip{font-size:9px;padding:2px 6px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:8px;color:var(--ink-2);font-family:'SF Mono',Monaco,monospace}
+
+.row-actions{display:flex;gap:4px}
+.row-actions button{padding:3px 7px;font-size:10px}
+
+.audit-row{padding:8px 12px;border-bottom:1px solid var(--line);font-size:11px;
+  display:grid;grid-template-columns:130px 1fr 110px;gap:10px;align-items:center}
+.audit-row .who{color:var(--accent);font-size:10px}
+.audit-row .ts{color:var(--ink-3);font-size:10px;text-align:right}
+
+.modal-bd{position:fixed;inset:0;background:rgba(5,8,15,0.85);z-index:500;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--line)}
+.modal-title{font-size:14px;font-weight:600}
+.modal-body{padding:16px 18px}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:span 2}
+.form-row{margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">AeliusParallel</div>
+    <div class="login-title">FG Registry</div>
+    <div class="login-sub">Master FG database — single source of truth</div>
+    <input class="login-input" type="email" id="login-email" placeholder="email"/>
+    <input class="login-input" type="password" id="login-pass" placeholder="password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="dashboard" class="hidden">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:11px">
+      <div class="brand-mark">A</div>
+      <div class="brand-text">
+        <div class="name">FG Registry</div>
+        <div class="sub">AeliusParallel</div>
+      </div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="email" id="user-email"></div>
+        <div class="role" id="user-role"></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<div id="modal-container"></div>
+
+<script>
+// ============= ROLE CONFIG =============
+var ROLE_CONFIG = {
+  FOUNDERS:    { label:'Founders', canImport:true, canAdd:true, canEdit:true, canDelete:true, canApprove:true, canSeeAudit:true, requiresApproval:false },
+  PMS_EDITOR:  { label:'Editor',   canImport:false,canAdd:true, canEdit:true, canDelete:false,canApprove:false,canSeeAudit:true, requiresApproval:true  },
+  READONLY:    { label:'Viewer',   canImport:false,canAdd:false,canEdit:false,canDelete:false,canApprove:false,canSeeAudit:false,requiresApproval:false }
+};
+
+// ============= STATE =============
+var db, auth;
+var currentUser=null, currentRole=null, currentTab='catalog';
+var fgList = [];          // From Firestore fg_registry collection
+var barcodeList = [];     // From Firestore fg_registry_barcodes collection
+var pendingList = [];     // From Firestore fg_registry_pending collection
+var unsubFG = null, unsubBarcodes = null, unsubPending = null;
+var importDraft = null;
+var barcodeImportDraft = null;
+
+// ============= INIT =============
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof firebase === 'undefined') {
+    document.getElementById('login-err').textContent = 'Firebase failed to load. Check internet.';
+    return;
+  }
+  if (typeof XLSX === 'undefined') {
+    console.warn('[REGISTRY] SheetJS (XLSX) not loaded — Excel import will fail. Check internet.');
+  }
+  try {
+    firebase.initializeApp(window.FIREBASE_CONFIG);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    auth.onAuthStateChanged(function(user) {
+      if (user) onLoggedIn(user);
+      else showLogin();
+    });
+  } catch(e) {
+    document.getElementById('login-err').textContent = 'Firebase init failed: ' + e.message;
+  }
+});
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Sign In →';
+}
+
+function doLogin() {
+  var email = document.getElementById('login-email').value.trim().toLowerCase();
+  var pass = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-err');
+  var btn = document.getElementById('login-btn');
+  if (!email || !pass) { err.textContent = 'Email and password required'; return; }
+  err.textContent = '';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  auth.signInWithEmailAndPassword(email, pass).catch(function(e) {
+    err.textContent = 'Sign in failed: ' + (e.code === 'auth/invalid-credential' ? 'wrong email or password' : e.message);
+    btn.disabled = false;
+    btn.textContent = 'Sign In →';
+  });
+}
+
+function doLogout() {
+  if (unsubFG) unsubFG();
+  if (unsubBarcodes) unsubBarcodes();
+  if (unsubPending) unsubPending();
+  auth.signOut();
+}
+
+function onLoggedIn(user) {
+  currentUser = user;
+  var role = window.REGISTRY_ROLE_MAP[user.email.toLowerCase()];
+  if (!role) {
+    document.getElementById('login-err').textContent = 'No FG Registry role for ' + user.email;
+    auth.signOut();
+    return;
+  }
+  currentRole = role;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('user-avatar').textContent = user.email.charAt(0).toUpperCase();
+  document.getElementById('user-email').textContent = user.email;
+  document.getElementById('user-role').textContent = ROLE_CONFIG[role].label;
+  subscribeData();
+  renderTabs();
+  renderMain();
+}
+
+function subscribeData() {
+  unsubFG = db.collection('fg_registry').orderBy('code').onSnapshot(function(snap) {
+    fgList = [];
+    snap.forEach(function(doc) {
+      fgList.push(Object.assign({ _id: doc.id }, doc.data()));
+    });
+    console.log('[REGISTRY] FG list loaded: ' + fgList.length);
+    renderMain();
+  }, function(err) {
+    console.error('[REGISTRY] Subscribe error:', err);
+  });
+
+  unsubBarcodes = db.collection('fg_registry_barcodes').onSnapshot(function(snap) {
+    barcodeList = [];
+    snap.forEach(function(doc) {
+      barcodeList.push(Object.assign({ _id: doc.id }, doc.data()));
+    });
+    barcodeList.sort(function(a, b) { return (a.barcode||'').localeCompare(b.barcode||''); });
+    console.log('[REGISTRY] Barcodes loaded: ' + barcodeList.length);
+    if (currentTab === 'barcodes') renderMain();
+  }, function(err) {
+    console.error('[REGISTRY] Barcode subscribe error:', err);
+  });
+
+  unsubPending = db.collection('fg_registry_pending')
+    .where('status', '==', 'AWAITING')
+    .onSnapshot(function(snap) {
+      pendingList = [];
+      snap.forEach(function(doc) {
+        pendingList.push(Object.assign({ _id: doc.id }, doc.data()));
+      });
+      pendingList.sort(function(a, b) { return (b.proposedTs||0) - (a.proposedTs||0); });
+      console.log('[REGISTRY] Pending: ' + pendingList.length);
+      renderTabs();  // Update badge
+      if (currentTab === 'approvals' || currentTab === 'my-proposals') renderMain();
+    }, function(err) {
+      console.error('[REGISTRY] Pending subscribe error:', err);
+    });
+}
+
+// ============= TABS =============
+function renderTabs() {
+  var cfg = ROLE_CONFIG[currentRole];
+  var pendingCount = pendingList.length;
+  var myPendingCount = pendingList.filter(function(p) { return p.proposedBy === currentUser.email; }).length;
+
+  var tabs = [
+    { id: 'catalog', label: 'FG Catalog' },
+    cfg.canImport ? { id: 'import', label: 'Import' } : null,
+    cfg.canAdd ? { id: 'add', label: 'Add New FG' } : null,
+    { id: 'barcodes', label: 'Barcodes' },
+    cfg.canApprove ? { id: 'approvals', label: 'Approvals', badge: pendingCount } : null,
+    cfg.requiresApproval ? { id: 'my-proposals', label: 'My Proposals', badge: myPendingCount } : null,
+    cfg.canSeeAudit ? { id: 'audit', label: 'Audit Log' } : null
+  ].filter(Boolean);
+
+  document.getElementById('tabs').innerHTML = tabs.map(function(t) {
+    var badgeHtml = (t.badge && t.badge > 0) ? '<span class="tab-badge">'+t.badge+'</span>' : '';
+    return '<div class="tab '+(currentTab===t.id?'active':'')+'" onclick="switchTab(\''+t.id+'\')">'+t.label+badgeHtml+'</div>';
+  }).join('');
+}
+
+function switchTab(id) {
+  currentTab = id;
+  renderTabs();
+  renderMain();
+}
+
+function renderMain() {
+  if (currentTab === 'catalog') return renderCatalog();
+  if (currentTab === 'import') return renderImport();
+  if (currentTab === 'add') return renderAddFG();
+  if (currentTab === 'barcodes') return renderBarcodes();
+  if (currentTab === 'approvals') return renderApprovals();
+  if (currentTab === 'my-proposals') return renderMyProposals();
+  if (currentTab === 'audit') return renderAudit();
+}
+
+// ============= CATALOG TAB =============
+function renderCatalog() {
+  var main = document.getElementById('main');
+  var cfg = ROLE_CONFIG[currentRole];
+
+  var search = (window._catSearch || '').toLowerCase().trim();
+  var brandFilter = window._catBrand || 'all';
+  var subBrandFilter = window._catSubBrand || 'all';
+  var statusFilter = window._catStatus || 'all';
+
+  var visible = fgList.filter(function(f) {
+    if (brandFilter !== 'all' && f.brand !== brandFilter) return false;
+    if (subBrandFilter !== 'all' && f.subBrand !== subBrandFilter) return false;
+    if (statusFilter === 'active' && f.active === false) return false;
+    if (statusFilter === 'inactive' && f.active !== false) return false;
+    if (search) {
+      var hay = (f.code+' '+f.name+' '+(f.aliases||[]).join(' ')).toLowerCase();
+      if (hay.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+
+  var brands = uniqueValues(fgList, 'brand');
+  var subBrands = uniqueValues(fgList, 'subBrand');
+  var activeCount = fgList.filter(function(f){return f.active!==false;}).length;
+  var inactiveCount = fgList.length - activeCount;
+
+  var html = '<div class="page-title"><h1>FG Catalog</h1>' +
+    '<div class="sub">Master list of all Finished Goods. Source of truth for PMS, PQC, and other tools.</div></div>';
+
+  html += '<div class="kpi-row">' +
+    '<div class="kpi"><div class="kpi-val">'+fgList.length+'</div><div class="kpi-label">Total FGs</div></div>' +
+    '<div class="kpi good"><div class="kpi-val">'+activeCount+'</div><div class="kpi-label">Active</div></div>' +
+    '<div class="kpi info"><div class="kpi-val">'+inactiveCount+'</div><div class="kpi-label">Inactive</div></div>' +
+    '<div class="kpi warn"><div class="kpi-val">'+visible.length+'</div><div class="kpi-label">Showing</div></div>' +
+  '</div>';
+
+  if (fgList.length === 0) {
+    html += '<div class="banner info">📦 Registry is empty. Go to <strong>Import</strong> tab to seed FGs from Excel, or <strong>Add New FG</strong> to add one manually.</div>';
+    main.innerHTML = html;
+    return;
+  }
+
+  // Filter bar
+  html += '<div class="filter-bar">';
+  html += '<input placeholder="Search code, name, or alias..." value="'+escAttr(window._catSearch||'')+'" oninput="window._catSearch=this.value;debounceRender()"/>';
+  html += '<select onchange="window._catBrand=this.value;renderMain()"><option value="all">All brands</option>';
+  brands.forEach(function(b){html+='<option value="'+escAttr(b)+'"'+(brandFilter===b?' selected':'')+'>'+escHtml(b)+'</option>';});
+  html += '</select>';
+  html += '<select onchange="window._catSubBrand=this.value;renderMain()"><option value="all">All sub-brands</option>';
+  subBrands.forEach(function(b){html+='<option value="'+escAttr(b)+'"'+(subBrandFilter===b?' selected':'')+'>'+escHtml(b)+'</option>';});
+  html += '</select>';
+  html += '<select onchange="window._catStatus=this.value;renderMain()">' +
+    '<option value="all"'+(statusFilter==='all'?' selected':'')+'>All status</option>' +
+    '<option value="active"'+(statusFilter==='active'?' selected':'')+'>Active only</option>' +
+    '<option value="inactive"'+(statusFilter==='inactive'?' selected':'')+'>Inactive only</option>' +
+  '</select>';
+  html += '<button onclick="window._catSearch=null;window._catBrand=null;window._catSubBrand=null;window._catStatus=null;renderMain()">Clear</button>';
+  html += '</div>';
+
+  // Table
+  html += '<div class="panel"><div class="table-wrap"><table class="fg-table">';
+  html += '<thead><tr>' +
+    '<th style="width:80px">Code</th>' +
+    '<th>Canonical Name</th>' +
+    '<th style="width:80px">Brand</th>' +
+    '<th style="width:80px">Sub-Brand</th>' +
+    '<th>Aliases (PMS names)</th>' +
+    '<th style="width:60px">Status</th>' +
+    (cfg.canEdit ? '<th style="width:100px">Actions</th>' : '') +
+  '</tr></thead><tbody>';
+
+  if (visible.length === 0) {
+    html += '<tr><td colspan="'+(cfg.canEdit?7:6)+'" class="empty">No FGs match the current filters</td></tr>';
+  } else {
+    visible.forEach(function(f) {
+      var statusPill = f.active===false
+        ? '<span class="pill pill-muted">INACTIVE</span>'
+        : '<span class="pill pill-good">ACTIVE</span>';
+      var aliasHtml = (f.aliases || []).map(function(a) {
+        return '<span class="alias-chip">'+escHtml(a)+'</span>';
+      }).join('');
+      html += '<tr>';
+      html += '<td><span class="mono" style="color:var(--accent)">'+escHtml(f.code||'—')+'</span></td>';
+      html += '<td><strong>'+escHtml(f.name||'—')+'</strong></td>';
+      html += '<td>'+escHtml(f.brand||'—')+'</td>';
+      html += '<td>'+escHtml(f.subBrand||'—')+'</td>';
+      html += '<td><div class="aliases-display">'+(aliasHtml||'<span style="color:var(--ink-3);font-size:10px">none</span>')+'</div></td>';
+      html += '<td>'+statusPill+'</td>';
+      if (cfg.canEdit) {
+        html += '<td><div class="row-actions">' +
+          '<button onclick="openEditFG(\''+f._id+'\')">Edit</button>' +
+          (f.active===false
+            ? '<button onclick="toggleActive(\''+f._id+'\',true)" style="color:var(--good)">Activate</button>'
+            : '<button onclick="toggleActive(\''+f._id+'\',false)" style="color:var(--warn)">Deactivate</button>'
+          ) +
+        '</div></td>';
+      }
+      html += '</tr>';
+    });
+  }
+
+  html += '</tbody></table></div></div>';
+  main.innerHTML = html;
+}
+
+var _renderTimer;
+function debounceRender() { clearTimeout(_renderTimer); _renderTimer = setTimeout(renderMain, 200); }
+
+function uniqueValues(arr, key) {
+  var s = {};
+  arr.forEach(function(o) { if (o[key]) s[o[key]] = true; });
+  return Object.keys(s).sort();
+}
+
+// ============= IMPORT TAB =============
+function renderImport() {
+  var main = document.getElementById('main');
+  var cfg = ROLE_CONFIG[currentRole];
+  if (!cfg.canImport) {
+    main.innerHTML = '<div class="banner warn">You don\'t have permission to import.</div>';
+    return;
+  }
+
+  var html = '<div class="page-title"><h1>Import FGs from Excel</h1>' +
+    '<div class="sub">Bulk-seed the Registry from a spreadsheet. Each row becomes one FG document in Firestore.</div></div>';
+
+  // Step 1: Upload
+  var step1Done = !!importDraft;
+  html += '<div class="import-step '+(step1Done?'done':'active')+'">';
+  html += '<h4>'+(step1Done?'✓ ':'1. ')+'Upload Excel/CSV file</h4>';
+  if (!step1Done) {
+    html += '<div style="font-size:11px;color:var(--ink-2);margin-bottom:10px">Expected columns: <strong>Canonical Name Final</strong>, <strong>Name in PMS</strong>, <strong>Brand</strong>, <strong>Sub-Brand</strong>, <strong>Brand Name in PMS</strong>, <strong>Action in PMS</strong>. Other column names also accepted — you\'ll map them in the next step.</div>';
+    html += '<input type="file" id="import-file" accept=".xlsx,.xls,.csv" onchange="handleImportFile(event)" style="padding:8px"/>';
+    html += '<div id="import-err" class="banner bad" style="display:none;margin-top:10px"></div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--ink-2)">Loaded <strong>'+importDraft.rows.length+'</strong> rows from <code>'+escHtml(importDraft.filename)+'</code> (sheet: '+escHtml(importDraft.sheetName)+')</div>';
+    html += '<button onclick="importDraft=null;renderMain()" style="margin-top:8px">Choose different file</button>';
+  }
+  html += '</div>';
+
+  if (!step1Done) { main.innerHTML = html; return; }
+
+  // Step 2: Map columns
+  var step2Done = importDraft.mappingConfirmed;
+  html += '<div class="import-step '+(step2Done?'done':'active')+'">';
+  html += '<h4>'+(step2Done?'✓ ':'2. ')+'Map columns</h4>';
+
+  var detected = importDraft.headers;
+  var fieldMap = importDraft.fieldMap || autoDetectMapping(detected);
+  importDraft.fieldMap = fieldMap;
+
+  if (!step2Done) {
+    html += '<div style="font-size:11px;color:var(--ink-2);margin-bottom:10px">Match each Registry field to a column in your file. Required: Canonical Name, Brand, Sub-Brand. Optional: aliases (becomes the searchable PMS name), Code (auto-extracted from name if blank).</div>';
+    html += '<div class="col-mapping">';
+    [
+      {key:'canonicalName', label:'Canonical Name (required)', required:true},
+      {key:'brand', label:'Brand (required)', required:true},
+      {key:'subBrand', label:'Sub-Brand (required)', required:true},
+      {key:'brandInPms', label:'Brand Name in PMS', required:false},
+      {key:'aliasFromPms', label:'Alias / Name in PMS (creates aliases[])', required:false},
+      {key:'action', label:'Action (Add/Update/Keep — informational)', required:false}
+    ].forEach(function(field) {
+      html += '<div><label>'+escHtml(field.label)+'</label>';
+      html += '<select onchange="importDraft.fieldMap[\''+field.key+'\']=this.value;renderMain()">';
+      html += '<option value="">— None —</option>';
+      detected.forEach(function(col) {
+        var sel = fieldMap[field.key] === col ? ' selected' : '';
+        html += '<option value="'+escAttr(col)+'"'+sel+'>'+escHtml(col)+'</option>';
+      });
+      html += '</select></div>';
+    });
+    html += '</div>';
+
+    var canProceed = fieldMap.canonicalName && fieldMap.brand && fieldMap.subBrand;
+    html += '<div style="margin-top:14px"><button class="primary" onclick="confirmMapping()" '+(canProceed?'':'disabled')+'>Continue to preview →</button></div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--ink-2)">Mapping confirmed. <button onclick="importDraft.mappingConfirmed=false;renderMain()" style="margin-left:8px">Re-edit mapping</button></div>';
+  }
+  html += '</div>';
+
+  if (!step2Done) { main.innerHTML = html; return; }
+
+  // Step 3: Preview
+  var step3Done = importDraft.imported;
+  html += '<div class="import-step '+(step3Done?'done':'active')+'">';
+  html += '<h4>'+(step3Done?'✓ ':'3. ')+'Preview & Import</h4>';
+
+  var processed = processImportRows(importDraft.rows, fieldMap);
+  importDraft.processed = processed;
+
+  // Stats
+  var existingNames = {};
+  fgList.forEach(function(f) { if (f.name) existingNames[f.name.toLowerCase()] = true; });
+  var newCount = processed.valid.filter(function(p) { return !existingNames[p.name.toLowerCase()]; }).length;
+  var dupCount = processed.valid.filter(function(p) { return existingNames[p.name.toLowerCase()]; }).length;
+
+  html += '<div style="display:flex;gap:14px;margin:10px 0;font-size:11px">';
+  html += '<div>Total rows: <strong>'+importDraft.rows.length+'</strong></div>';
+  html += '<div style="color:var(--good)">Valid: <strong>'+processed.valid.length+'</strong></div>';
+  html += '<div style="color:var(--bad)">Invalid: <strong>'+processed.invalid.length+'</strong></div>';
+  html += '<div style="color:var(--accent-2)">New (will add): <strong>'+newCount+'</strong></div>';
+  html += '<div style="color:var(--warn)">Duplicates (will skip): <strong>'+dupCount+'</strong></div>';
+  html += '</div>';
+
+  if (processed.invalid.length > 0) {
+    html += '<div class="banner warn">⚠ '+processed.invalid.length+' rows will be skipped due to missing required fields. Click "Show invalid" below.</div>';
+  }
+
+  // Preview table
+  html += '<div class="preview-table"><table>';
+  html += '<thead><tr><th>Code</th><th>Canonical Name</th><th>Brand</th><th>Sub-Brand</th><th>Alias</th><th>Status</th></tr></thead><tbody>';
+  processed.valid.slice(0, 50).forEach(function(p) {
+    var dup = existingNames[p.name.toLowerCase()];
+    var status = dup ? '<span style="color:var(--warn)">DUP — skip</span>' : '<span style="color:var(--good)">NEW — add</span>';
+    html += '<tr>' +
+      '<td class="mono" style="color:var(--accent)">'+escHtml(p.code||'—')+'</td>' +
+      '<td>'+escHtml(p.name)+'</td>' +
+      '<td>'+escHtml(p.brand)+'</td>' +
+      '<td>'+escHtml(p.subBrand)+'</td>' +
+      '<td style="font-size:9px;color:var(--ink-3)">'+escHtml((p.aliases||[]).join(', ')||'—')+'</td>' +
+      '<td>'+status+'</td>' +
+    '</tr>';
+  });
+  if (processed.valid.length > 50) {
+    html += '<tr><td colspan="6" style="text-align:center;color:var(--ink-3);font-style:italic">... and '+(processed.valid.length-50)+' more (will all be processed)</td></tr>';
+  }
+  html += '</tbody></table></div>';
+
+  if (!step3Done) {
+    html += '<div style="margin-top:14px;display:flex;gap:8px;align-items:center">';
+    html += '<button class="primary" onclick="executeImport()" '+(newCount===0?'disabled':'')+'>⚡ Import '+newCount+' new FGs to Firestore</button>';
+    html += '<span id="import-progress" style="font-size:11px;color:var(--ink-2)"></span>';
+    html += '</div>';
+  } else {
+    html += '<div class="banner good" style="margin-top:14px">✓ Imported '+importDraft.importedCount+' FGs successfully. <button onclick="importDraft=null;renderMain()" style="margin-left:10px">Start new import</button></div>';
+  }
+  html += '</div>';
+
+  main.innerHTML = html;
+}
+
+function autoDetectMapping(headers) {
+  var map = { canonicalName:'', brand:'', subBrand:'', brandInPms:'', aliasFromPms:'', action:'' };
+  headers.forEach(function(h) {
+    var l = h.toLowerCase().trim();
+    if (l === 'canonical name final' || l === 'canonical name' || l === 'name') map.canonicalName = h;
+    else if (l === 'brand') map.brand = h;
+    else if (l === 'sub-brand' || l === 'subbrand' || l === 'sub brand') map.subBrand = h;
+    else if (l === 'brand name in pms' || l === 'pms brand') map.brandInPms = h;
+    else if (l === 'name in pms' || l === 'pms name' || l === 'alias') map.aliasFromPms = h;
+    else if (l === 'action in pms' || l === 'action') map.action = h;
+  });
+  return map;
+}
+
+function handleImportFile(ev) {
+  var f = ev.target.files[0];
+  if (!f) return;
+  var errEl = document.getElementById('import-err');
+  errEl.style.display = 'none';
+
+  if (typeof XLSX === 'undefined') {
+    errEl.textContent = 'Excel parser (SheetJS) not loaded. Check internet connection.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type:'array' });
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      // Try header row 0 first
+      var rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      // If headers don't look right (e.g. one column called 'pms_export_all'), try header row 1
+      var headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+      if (headers.length === 1 || headers[0].indexOf('Unnamed') > -1) {
+        rows = XLSX.utils.sheet_to_json(ws, { defval:'', range:1 });
+        headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+      }
+      if (rows.length === 0) throw new Error('No rows found in sheet');
+      // Clean headers
+      headers = headers.map(function(h) { return String(h).trim(); });
+      importDraft = {
+        filename: f.name,
+        sheetName: sheetName,
+        rows: rows,
+        headers: headers,
+        fieldMap: null,
+        mappingConfirmed: false,
+        imported: false,
+        importedCount: 0
+      };
+      console.log('[REGISTRY] Loaded '+rows.length+' rows, headers:', headers);
+      renderMain();
+    } catch (err) {
+      errEl.textContent = 'Failed to parse: ' + err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function confirmMapping() {
+  importDraft.mappingConfirmed = true;
+  renderMain();
+}
+
+function processImportRows(rows, fieldMap) {
+  var valid = [], invalid = [];
+  rows.forEach(function(r, idx) {
+    var name = clean(r[fieldMap.canonicalName]);
+    var brand = clean(r[fieldMap.brand]);
+    var subBrand = clean(r[fieldMap.subBrand]);
+    var brandInPms = clean(r[fieldMap.brandInPms]);
+    var aliasFromPms = clean(r[fieldMap.aliasFromPms]);
+    var action = clean(r[fieldMap.action]);
+
+    if (!name || !brand || !subBrand) {
+      invalid.push({ rowIdx: idx+1, reason: 'missing required field', raw: r });
+      return;
+    }
+
+    // Extract code from canonical name (e.g. "SSAZ1 Azevita..." → code="SSAZ1")
+    var code = '';
+    var codeMatch = name.match(/^([A-Z]+\d+)\s+(.+)$/);
+    var displayName = name;
+    if (codeMatch) {
+      code = codeMatch[1];
+      displayName = codeMatch[2];
+    }
+
+    // Build aliases array — only include real PMS names, skip "Not Available"
+    var aliases = [];
+    if (aliasFromPms && aliasFromPms.toLowerCase().indexOf('not available') === -1) {
+      aliases.push(aliasFromPms);
+    }
+
+    valid.push({
+      code: code,
+      name: name,                  // Full canonical name including code prefix
+      displayName: displayName,    // Without code (for display contexts)
+      brand: brand,
+      subBrand: subBrand,
+      brandInPms: brandInPms || brand,
+      aliases: aliases,
+      action: action,
+      rowIdx: idx+1
+    });
+  });
+  return { valid: valid, invalid: invalid };
+}
+
+function clean(v) {
+  if (v == null) return '';
+  return String(v).replace(/_x000D_/g, '').replace(/\r/g, '').trim();
+}
+
+function executeImport() {
+  var processed = importDraft.processed;
+  var existingNames = {};
+  fgList.forEach(function(f) { if (f.name) existingNames[f.name.toLowerCase()] = true; });
+  var toImport = processed.valid.filter(function(p) { return !existingNames[p.name.toLowerCase()]; });
+
+  if (toImport.length === 0) {
+    alert('Nothing to import — all rows already exist in Registry.');
+    return;
+  }
+
+  if (!confirm('Import ' + toImport.length + ' FGs into Firestore? This is reversible only by deleting them individually.')) return;
+
+  var progEl = document.getElementById('import-progress');
+  progEl.textContent = 'Importing 0 / ' + toImport.length + '...';
+
+  // Firestore batch write — max 500 ops per batch
+  var BATCH_SIZE = 400;
+  var imported = 0;
+  var errors = [];
+
+  function importChunk(chunkStart) {
+    if (chunkStart >= toImport.length) {
+      // All done
+      progEl.textContent = 'Done — ' + imported + ' imported, ' + errors.length + ' errors.';
+      importDraft.imported = true;
+      importDraft.importedCount = imported;
+      // Audit
+      db.collection('fg_registry_audit').doc(String(Date.now())).set({
+        ts: Date.now(),
+        by: currentUser.email,
+        role: currentRole,
+        type: 'BULK_IMPORT',
+        count: imported,
+        errors: errors
+      });
+      renderMain();
+      return;
+    }
+    var batch = db.batch();
+    var chunk = toImport.slice(chunkStart, chunkStart + BATCH_SIZE);
+    var now = Date.now();
+    chunk.forEach(function(p) {
+      var ref = db.collection('fg_registry').doc();
+      batch.set(ref, {
+        code: p.code,
+        name: p.name,
+        displayName: p.displayName,
+        brand: p.brand,
+        subBrand: p.subBrand,
+        brandInPms: p.brandInPms,
+        aliases: p.aliases || [],
+        type: 'product',
+        active: true,
+        createdTs: now,
+        createdBy: currentUser.email,
+        updatedTs: now,
+        updatedBy: currentUser.email,
+        importedFromExcel: true,
+        importedFile: importDraft.filename,
+        importAction: p.action || ''
+      });
+    });
+    batch.commit().then(function() {
+      imported += chunk.length;
+      progEl.textContent = 'Importing ' + imported + ' / ' + toImport.length + '...';
+      importChunk(chunkStart + BATCH_SIZE);
+    }).catch(function(err) {
+      errors.push({ chunk: chunkStart, error: err.message });
+      progEl.textContent = 'Error: ' + err.message;
+      console.error('Import chunk failed:', err);
+    });
+  }
+
+  importChunk(0);
+}
+
+// ============= ADD NEW FG TAB =============
+function renderAddFG() {
+  var main = document.getElementById('main');
+  var cfg = ROLE_CONFIG[currentRole];
+  if (!cfg.canAdd) {
+    main.innerHTML = '<div class="banner warn">No permission to add.</div>';
+    return;
+  }
+
+  var html = '<div class="page-title"><h1>Add New FG</h1>' +
+    '<div class="sub">Add a single FG to the Registry. For bulk, use Import tab.</div></div>';
+
+  html += '<div class="panel"><div class="panel-body">';
+  html += '<div class="form-grid">';
+  html += '<div class="form-row"><label>Code (e.g. SSAZ17, optional)</label><input id="add-code" placeholder="auto-extracted from name if blank"/></div>';
+  html += '<div class="form-row"><label>Type</label><select id="add-type"><option value="product">Product</option><option value="service">Service</option></select></div>';
+  html += '<div class="form-row full"><label>Canonical Name *</label><input id="add-name" placeholder="e.g. SSAZ17 Azevita New Product Name"/></div>';
+  html += '<div class="form-row"><label>Brand *</label><input id="add-brand" placeholder="e.g. SeaSoul" list="brand-list"/></div>';
+  html += '<div class="form-row"><label>Sub-Brand *</label><input id="add-subBrand" placeholder="e.g. Azevita" list="subbrand-list"/></div>';
+  html += '<div class="form-row"><label>Brand Name in PMS</label><input id="add-brandInPms" placeholder="leave blank to use Brand"/></div>';
+  html += '<div class="form-row full"><label>Aliases (comma-separated PMS names)</label><textarea id="add-aliases" placeholder="e.g. Old PMS Name 1, Bulk Name 2"></textarea></div>';
+  html += '</div>';
+
+  // Datalists from existing data
+  html += '<datalist id="brand-list">';
+  uniqueValues(fgList, 'brand').forEach(function(b) { html += '<option value="'+escAttr(b)+'">'; });
+  html += '</datalist>';
+  html += '<datalist id="subbrand-list">';
+  uniqueValues(fgList, 'subBrand').forEach(function(b) { html += '<option value="'+escAttr(b)+'">'; });
+  html += '</datalist>';
+
+  html += '<div id="add-err" style="color:var(--bad);font-size:11px;min-height:14px;margin-top:8px"></div>';
+  html += '<div style="margin-top:14px"><button class="primary" onclick="submitAddFG()">Add FG to Registry →</button></div>';
+  html += '</div></div>';
+
+  main.innerHTML = html;
+}
+
+function submitAddFG() {
+  var err = document.getElementById('add-err');
+  err.textContent = '';
+  var code = document.getElementById('add-code').value.trim();
+  var name = document.getElementById('add-name').value.trim();
+  var brand = document.getElementById('add-brand').value.trim();
+  var subBrand = document.getElementById('add-subBrand').value.trim();
+  var brandInPms = document.getElementById('add-brandInPms').value.trim();
+  var type = document.getElementById('add-type').value;
+  var aliasesRaw = document.getElementById('add-aliases').value.trim();
+
+  if (!name) return err.textContent = 'Canonical name required';
+  if (!brand) return err.textContent = 'Brand required';
+  if (!subBrand) return err.textContent = 'Sub-Brand required';
+
+  if (!code) {
+    var m = name.match(/^([A-Z]+\d+)\s+/);
+    if (m) code = m[1];
+  }
+
+  var lower = name.toLowerCase();
+  if (fgList.some(function(f) { return (f.name||'').toLowerCase() === lower; })) {
+    return err.textContent = 'A FG with this canonical name already exists.';
+  }
+  // Also check pending
+  if (pendingList.some(function(p) { return p.proposalType === 'ADD' && (p.payload||{}).name && p.payload.name.toLowerCase() === lower; })) {
+    return err.textContent = 'A pending proposal exists for this FG name. Wait for approval/rejection.';
+  }
+
+  var aliases = aliasesRaw ? aliasesRaw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+  var displayName = name;
+  var codeMatch = name.match(/^([A-Z]+\d+)\s+(.+)$/);
+  if (codeMatch) displayName = codeMatch[2];
+
+  var now = Date.now();
+  var payload = {
+    code: code, name: name, displayName: displayName,
+    brand: brand, subBrand: subBrand, brandInPms: brandInPms || brand,
+    aliases: aliases, type: type, active: true
+  };
+
+  var cfg = ROLE_CONFIG[currentRole];
+  if (cfg.requiresApproval) {
+    // Save to pending queue
+    db.collection('fg_registry_pending').add({
+      proposalType: 'ADD',
+      proposedBy: currentUser.email,
+      proposedRole: currentRole,
+      proposedTs: now,
+      status: 'AWAITING',
+      payload: payload
+    }).then(function(ref) {
+      alert('Proposal submitted for Founders approval.\n\nFG: ' + name + '\n\nYou can track it in the "My Proposals" tab.');
+      ['add-code','add-name','add-brand','add-subBrand','add-brandInPms','add-aliases'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      currentTab = 'my-proposals';
+      renderTabs();
+      renderMain();
+    }).catch(function(e) { err.textContent = 'Submission failed: ' + e.message; });
+  } else {
+    // Founders — direct write
+    payload.createdTs = now;
+    payload.createdBy = currentUser.email;
+    payload.updatedTs = now;
+    payload.updatedBy = currentUser.email;
+    db.collection('fg_registry').add(payload).then(function(ref) {
+      db.collection('fg_registry_audit').doc(String(now)).set({
+        ts: now, by: currentUser.email, role: currentRole,
+        type: 'ADD', fgId: ref.id, name: name
+      });
+      alert('Added: ' + name);
+      ['add-code','add-name','add-brand','add-subBrand','add-brandInPms','add-aliases'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      currentTab = 'catalog';
+      renderTabs();
+      renderMain();
+    }).catch(function(e) { err.textContent = 'Add failed: ' + e.message; });
+  }
+}
+
+// ============= EDIT / TOGGLE =============
+function openEditFG(id) {
+  var f = fgList.find(function(x) { return x._id === id; });
+  if (!f) return;
+  var html = '<div class="modal-bd" onclick="if(event.target===this)closeModal()">';
+  html += '<div class="modal">';
+  html += '<div class="modal-hdr"><div class="modal-title">Edit FG</div></div>';
+  html += '<div class="modal-body">';
+  html += '<div class="form-grid">';
+  html += '<div class="form-row"><label>Code</label><input id="ed-code" value="'+escAttr(f.code||'')+'"/></div>';
+  html += '<div class="form-row"><label>Type</label><select id="ed-type">' +
+    '<option value="product"'+(f.type==='product'?' selected':'')+'>Product</option>' +
+    '<option value="service"'+(f.type==='service'?' selected':'')+'>Service</option>' +
+  '</select></div>';
+  html += '<div class="form-row full"><label>Canonical Name *</label><input id="ed-name" value="'+escAttr(f.name||'')+'"/></div>';
+  html += '<div class="form-row"><label>Brand *</label><input id="ed-brand" value="'+escAttr(f.brand||'')+'"/></div>';
+  html += '<div class="form-row"><label>Sub-Brand *</label><input id="ed-subBrand" value="'+escAttr(f.subBrand||'')+'"/></div>';
+  html += '<div class="form-row full"><label>Brand Name in PMS</label><input id="ed-brandInPms" value="'+escAttr(f.brandInPms||'')+'"/></div>';
+  html += '<div class="form-row full"><label>Aliases (comma-separated)</label><textarea id="ed-aliases">'+escHtml((f.aliases||[]).join(', '))+'</textarea></div>';
+  html += '</div>';
+  html += '<div id="ed-err" style="color:var(--bad);font-size:11px;min-height:14px;margin-top:8px"></div>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button onclick="closeModal()">Cancel</button>';
+  html += '<button class="primary" onclick="saveEditFG(\''+id+'\')">Save changes</button>';
+  html += '</div></div></div>';
+  document.getElementById('modal-container').innerHTML = html;
+}
+
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+
+function saveEditFG(id) {
+  var err = document.getElementById('ed-err');
+  err.textContent = '';
+  var code = document.getElementById('ed-code').value.trim();
+  var name = document.getElementById('ed-name').value.trim();
+  var brand = document.getElementById('ed-brand').value.trim();
+  var subBrand = document.getElementById('ed-subBrand').value.trim();
+  var brandInPms = document.getElementById('ed-brandInPms').value.trim();
+  var type = document.getElementById('ed-type').value;
+  var aliasesRaw = document.getElementById('ed-aliases').value.trim();
+  if (!name) return err.textContent = 'Name required';
+  if (!brand) return err.textContent = 'Brand required';
+  if (!subBrand) return err.textContent = 'Sub-Brand required';
+  var aliases = aliasesRaw ? aliasesRaw.split(',').map(function(s){return s.trim();}).filter(Boolean) : [];
+  var displayName = name;
+  var m = name.match(/^([A-Z]+\d+)\s+(.+)$/);
+  if (m) displayName = m[2];
+  var now = Date.now();
+  var update = {
+    code: code, name: name, displayName: displayName, brand: brand, subBrand: subBrand,
+    brandInPms: brandInPms || brand, aliases: aliases, type: type
+  };
+
+  var cfg = ROLE_CONFIG[currentRole];
+  if (cfg.requiresApproval) {
+    var orig = fgList.find(function(x) { return x._id === id; });
+    db.collection('fg_registry_pending').add({
+      proposalType: 'EDIT',
+      proposedBy: currentUser.email,
+      proposedRole: currentRole,
+      proposedTs: now,
+      status: 'AWAITING',
+      fgId: id,
+      original: orig ? {
+        code: orig.code||'', name: orig.name||'', displayName: orig.displayName||'',
+        brand: orig.brand||'', subBrand: orig.subBrand||'', brandInPms: orig.brandInPms||'',
+        aliases: orig.aliases||[], type: orig.type||''
+      } : null,
+      payload: update
+    }).then(function() {
+      alert('Edit proposal submitted for Founders approval.\n\nFG: ' + name);
+      closeModal();
+    }).catch(function(e) { err.textContent = 'Submission failed: ' + e.message; });
+  } else {
+    update.updatedTs = now;
+    update.updatedBy = currentUser.email;
+    db.collection('fg_registry').doc(id).update(update).then(function() {
+      db.collection('fg_registry_audit').doc(String(now)).set({
+        ts: now, by: currentUser.email, role: currentRole,
+        type: 'EDIT', fgId: id, name: name
+      });
+      closeModal();
+    }).catch(function(e) { err.textContent = 'Save failed: ' + e.message; });
+  }
+}
+
+function toggleActive(id, newActive) {
+  var f = fgList.find(function(x) { return x._id === id; });
+  if (!f) return;
+  if (!confirm((newActive?'Activate':'Deactivate')+' "'+f.name+'"?')) return;
+  var now = Date.now();
+  var cfg = ROLE_CONFIG[currentRole];
+
+  if (cfg.requiresApproval) {
+    db.collection('fg_registry_pending').add({
+      proposalType: newActive ? 'ACTIVATE' : 'DEACTIVATE',
+      proposedBy: currentUser.email,
+      proposedRole: currentRole,
+      proposedTs: now,
+      status: 'AWAITING',
+      fgId: id,
+      original: { name: f.name, active: f.active !== false },
+      payload: { active: newActive }
+    }).then(function() {
+      alert((newActive?'Activate':'Deactivate')+' proposal submitted for approval.');
+    }).catch(function(e) { alert('Submission failed: '+e.message); });
+  } else {
+    db.collection('fg_registry').doc(id).update({
+      active: newActive, updatedTs: now, updatedBy: currentUser.email,
+      lastStatusChange: { ts: now, by: currentUser.email, role: currentRole, toStatus: newActive?'active':'inactive' }
+    }).then(function() {
+      db.collection('fg_registry_audit').doc(String(now)).set({
+        ts: now, by: currentUser.email, role: currentRole,
+        type: newActive?'ACTIVATE':'DEACTIVATE', fgId: id, name: f.name
+      });
+    }).catch(function(e) { alert('Toggle failed: '+e.message); });
+  }
+}
+
+// ============= BARCODE REGISTER TAB =============
+var VERIDIAN_BRANDS = ['Azevita', 'DeadSea', 'KeraSoul', 'SeaSoul'];
+
+function renderBarcodes() {
+  var main = document.getElementById('main');
+  var cfg = ROLE_CONFIG[currentRole];
+
+  var search = (window._bcSearch || '').toLowerCase().trim();
+  var statusFilter = window._bcStatus || 'all';
+
+  var visible = barcodeList.filter(function(b) {
+    if (statusFilter === 'available' && b.status !== 'available') return false;
+    if (statusFilter === 'allocated' && b.status !== 'allocated') return false;
+    if (search) {
+      var hay = ((b.barcode||'')+' '+(b.oldName||'')+' '+(b.newName||'')+' '+(b.fgName||'')).toLowerCase();
+      if (hay.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+
+  var availCount = barcodeList.filter(function(b){return b.status==='available';}).length;
+  var allocCount = barcodeList.filter(function(b){return b.status==='allocated';}).length;
+
+  var html = '<div class="page-title"><h1>Barcode Register</h1>' +
+    '<div class="sub">EAN-13 barcodes for Veridian brands (Azevita, DeadSea, KeraSoul, SeaSoul). One source of truth.</div></div>';
+
+  html += '<div class="kpi-row">' +
+    '<div class="kpi"><div class="kpi-val">'+barcodeList.length+'</div><div class="kpi-label">Total barcodes</div></div>' +
+    '<div class="kpi good"><div class="kpi-val">'+availCount+'</div><div class="kpi-label">Available</div></div>' +
+    '<div class="kpi info"><div class="kpi-val">'+allocCount+'</div><div class="kpi-label">Allocated</div></div>' +
+    '<div class="kpi warn"><div class="kpi-val">'+visible.length+'</div><div class="kpi-label">Showing</div></div>' +
+  '</div>';
+
+  if (barcodeList.length === 0) {
+    html += '<div class="banner info">📦 No barcodes seeded yet. ' +
+      (cfg.canImport ? 'Click "Import barcodes from Excel" below to seed.' : 'Ask Founders/PMS to import.') +
+    '</div>';
+    if (cfg.canImport) {
+      html += '<div class="panel"><div class="panel-body">';
+      html += '<h4 style="font-size:12px;margin-bottom:8px;color:var(--accent)">Import barcodes</h4>';
+      html += '<div style="font-size:11px;color:var(--ink-2);margin-bottom:10px">Excel/CSV with 3 columns: <strong>Barcode</strong> (13 digits), <strong>Product Name (Old)</strong>, <strong>Product Name (New / Canonical)</strong>. The "old" name becomes a searchable alias; the "new" name is matched against Registry FGs.</div>';
+      html += '<input type="file" id="bc-import-file" accept=".xlsx,.xls,.csv" onchange="handleBarcodeImportFile(event)" style="padding:8px"/>';
+      html += '<div id="bc-import-err" class="banner bad" style="display:none;margin-top:10px"></div>';
+      if (barcodeImportDraft) {
+        var bdr = barcodeImportDraft;
+        html += '<div style="margin-top:14px;padding:12px;background:var(--bg-2);border-radius:5px">';
+        html += '<div style="font-size:11px">Loaded <strong>'+bdr.rows.length+'</strong> rows from <code>'+escHtml(bdr.filename)+'</code></div>';
+        html += '<div style="margin-top:8px;font-size:11px;color:var(--ink-2)">Auto-detected columns:</div>';
+        html += '<div class="col-mapping" style="margin-top:6px">';
+        ['barcode','oldName','newName'].forEach(function(key) {
+          var label = {barcode:'Barcode column',oldName:'Old name column',newName:'New name column'}[key];
+          html += '<div><label>'+label+'</label><select onchange="barcodeImportDraft.fieldMap[\''+key+'\']=this.value;renderMain()">';
+          html += '<option value="">— None —</option>';
+          bdr.headers.forEach(function(h) {
+            var sel = bdr.fieldMap[key] === h ? ' selected' : '';
+            html += '<option value="'+escAttr(h)+'"'+sel+'>'+escHtml(h)+'</option>';
+          });
+          html += '</select></div>';
+        });
+        html += '</div>';
+
+        var processed = processBarcodeRows(bdr.rows, bdr.fieldMap);
+        var newCount = processed.valid.filter(function(p) {
+          return !barcodeList.some(function(b) { return b.barcode === p.barcode; });
+        }).length;
+
+        html += '<div style="margin-top:10px;font-size:11px">';
+        html += '<span style="color:var(--good)">Valid: '+processed.valid.length+'</span> · ';
+        html += '<span style="color:var(--bad)">Invalid: '+processed.invalid.length+'</span> · ';
+        html += '<span style="color:var(--accent-2)">New: '+newCount+'</span>';
+        html += '</div>';
+
+        // Sample preview
+        if (processed.valid.length > 0) {
+          html += '<div class="preview-table" style="margin-top:8px"><table>';
+          html += '<thead><tr><th>Barcode</th><th>Old Name</th><th>New Name</th></tr></thead><tbody>';
+          processed.valid.slice(0, 10).forEach(function(p) {
+            html += '<tr><td class="mono" style="color:var(--accent)">'+escHtml(p.barcode)+'</td><td>'+escHtml(p.oldName||'—')+'</td><td>'+escHtml(p.newName||'—')+'</td></tr>';
+          });
+          if (processed.valid.length > 10) html += '<tr><td colspan="3" style="text-align:center;color:var(--ink-3)">... and '+(processed.valid.length-10)+' more</td></tr>';
+          html += '</tbody></table></div>';
+        }
+
+        html += '<div style="margin-top:10px;display:flex;gap:8px;align-items:center">';
+        html += '<button class="primary" onclick="executeBarcodeImport()" '+(newCount===0?'disabled':'')+'>⚡ Import '+newCount+' new barcodes</button>';
+        html += '<button onclick="barcodeImportDraft=null;renderMain()">Cancel</button>';
+        html += '<span id="bc-import-progress" style="font-size:11px;color:var(--ink-2)"></span>';
+        html += '</div>';
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+    main.innerHTML = html;
+    return;
+  }
+
+  // Filter bar
+  html += '<div class="filter-bar">';
+  html += '<input placeholder="Search barcode, product name..." value="'+escAttr(window._bcSearch||'')+'" oninput="window._bcSearch=this.value;debounceRender()"/>';
+  html += '<select onchange="window._bcStatus=this.value;renderMain()">' +
+    '<option value="all"'+(statusFilter==='all'?' selected':'')+'>All</option>' +
+    '<option value="available"'+(statusFilter==='available'?' selected':'')+'>Available only</option>' +
+    '<option value="allocated"'+(statusFilter==='allocated'?' selected':'')+'>Allocated only</option>' +
+  '</select>';
+  if (cfg.canImport) {
+    html += '<button onclick="document.getElementById(\'bc-import-trigger\').click()">+ Import more barcodes</button>';
+    html += '<input type="file" id="bc-import-trigger" accept=".xlsx,.xls,.csv" onchange="handleBarcodeImportFile(event)" style="display:none"/>';
+  }
+  html += '<button onclick="window._bcSearch=null;window._bcStatus=null;renderMain()">Clear</button>';
+  html += '</div>';
+
+  if (barcodeImportDraft) {
+    // Show import preview at top
+    html += '<div class="banner info">Import in progress — '+barcodeImportDraft.rows.length+' rows loaded from '+escHtml(barcodeImportDraft.filename)+'. <button onclick="renderImportBarcodePreview()" style="margin-left:8px">Review</button> <button onclick="barcodeImportDraft=null;renderMain()">Cancel</button></div>';
+  }
+
+  // Table
+  html += '<div class="panel"><div class="table-wrap"><table class="fg-table">';
+  html += '<thead><tr>' +
+    '<th style="width:130px">Barcode</th>' +
+    '<th>Product Name (Old)</th>' +
+    '<th>Product Name (New / Canonical)</th>' +
+    '<th style="width:90px">Linked FG</th>' +
+    '<th style="width:80px">Status</th>' +
+    (cfg.canEdit ? '<th style="width:100px">Actions</th>' : '') +
+  '</tr></thead><tbody>';
+
+  if (visible.length === 0) {
+    html += '<tr><td colspan="'+(cfg.canEdit?6:5)+'" class="empty">No barcodes match filters</td></tr>';
+  } else {
+    visible.slice(0, 500).forEach(function(b) {
+      var statusPill = b.status === 'allocated'
+        ? '<span class="pill pill-info">ALLOCATED</span>'
+        : '<span class="pill pill-good">AVAILABLE</span>';
+      var linkedFG = b.fgName ? '<span class="mono" style="font-size:9px">'+escHtml(b.fgName.substring(0,30))+'</span>' : '<span style="color:var(--ink-3)">—</span>';
+      html += '<tr>';
+      html += '<td><span class="mono" style="color:var(--accent)">'+escHtml(b.barcode||'—')+'</span></td>';
+      html += '<td style="font-size:10px">'+escHtml(b.oldName||'—')+'</td>';
+      html += '<td style="font-size:10px"><strong>'+escHtml(b.newName||'—')+'</strong></td>';
+      html += '<td>'+linkedFG+'</td>';
+      html += '<td>'+statusPill+'</td>';
+      if (cfg.canEdit) {
+        html += '<td><div class="row-actions">';
+        if (b.status === 'available') {
+          html += '<button onclick="openAllocateBarcode(\''+b._id+'\')" style="color:var(--accent)">Allocate</button>';
+        } else {
+          html += '<button onclick="releaseBarcode(\''+b._id+'\')" style="color:var(--warn)">Release</button>';
+        }
+        html += '</div></td>';
+      }
+      html += '</tr>';
+    });
+    if (visible.length > 500) {
+      html += '<tr><td colspan="'+(cfg.canEdit?6:5)+'" style="text-align:center;color:var(--ink-3);padding:14px">... and '+(visible.length-500)+' more (use search/filter to narrow down)</td></tr>';
+    }
+  }
+
+  html += '</tbody></table></div></div>';
+  main.innerHTML = html;
+}
+
+function autoDetectBarcodeMapping(headers) {
+  var map = { barcode:'', oldName:'', newName:'' };
+  headers.forEach(function(h) {
+    var l = h.toLowerCase().trim();
+    if (l === 'barcode' || l === 'ean' || l === 'ean13' || l === 'ean-13' || l.indexOf('barcode') > -1) map.barcode = map.barcode || h;
+    else if (l.indexOf('old') > -1 && l.indexOf('name') > -1) map.oldName = h;
+    else if ((l.indexOf('new') > -1 || l.indexOf('canonical') > -1) && l.indexOf('name') > -1) map.newName = h;
+    else if (l === 'product name' && !map.oldName) map.oldName = h;
+    else if (l === 'product name (new)' || l === 'canonical name') map.newName = h;
+  });
+  return map;
+}
+
+function handleBarcodeImportFile(ev) {
+  var f = ev.target.files[0];
+  if (!f) return;
+  var errEl = document.getElementById('bc-import-err');
+  if (errEl) { errEl.style.display = 'none'; }
+  if (typeof XLSX === 'undefined') { alert('Excel parser not loaded'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type:'array' });
+      var sheetName = wb.SheetNames[0];
+      var ws = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      var headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+      if (headers.length === 1 || headers[0].indexOf('Unnamed') > -1) {
+        rows = XLSX.utils.sheet_to_json(ws, { defval:'', range:1 });
+        headers = rows.length > 0 ? Object.keys(rows[0]) : [];
+      }
+      headers = headers.map(function(h) { return String(h).trim(); });
+      if (rows.length === 0) throw new Error('No rows in sheet');
+      barcodeImportDraft = {
+        filename: f.name,
+        rows: rows,
+        headers: headers,
+        fieldMap: autoDetectBarcodeMapping(headers)
+      };
+      console.log('[REGISTRY] Barcode file loaded:', barcodeImportDraft);
+      renderMain();
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = 'Failed: ' + err.message;
+        errEl.style.display = 'block';
+      } else {
+        alert('Failed to parse: ' + err.message);
+      }
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function processBarcodeRows(rows, fieldMap) {
+  var valid = [], invalid = [];
+  rows.forEach(function(r, idx) {
+    var bc = clean(r[fieldMap.barcode]);
+    var oldN = clean(r[fieldMap.oldName]);
+    var newN = clean(r[fieldMap.newName]);
+    // Strip non-digits, check 13 chars
+    var bcDigits = bc.replace(/\D/g, '');
+    if (!bcDigits) {
+      invalid.push({ rowIdx: idx+1, reason: 'no barcode', raw: r });
+      return;
+    }
+    if (bcDigits.length !== 13) {
+      invalid.push({ rowIdx: idx+1, reason: 'barcode is '+bcDigits.length+' digits, expected 13', barcode: bcDigits, raw: r });
+      return;
+    }
+    valid.push({ barcode: bcDigits, oldName: oldN, newName: newN, rowIdx: idx+1 });
+  });
+  return { valid: valid, invalid: invalid };
+}
+
+function executeBarcodeImport() {
+  var processed = processBarcodeRows(barcodeImportDraft.rows, barcodeImportDraft.fieldMap);
+  var existing = {};
+  barcodeList.forEach(function(b) { existing[b.barcode] = true; });
+  var toImport = processed.valid.filter(function(p) { return !existing[p.barcode]; });
+  if (toImport.length === 0) { alert('Nothing new to import.'); return; }
+
+  if (!confirm('Import ' + toImport.length + ' barcodes? This adds them as "available" status.')) return;
+
+  var progEl = document.getElementById('bc-import-progress');
+  if (progEl) progEl.textContent = 'Starting...';
+
+  var BATCH_SIZE = 400;
+  var imported = 0;
+  var errors = [];
+
+  function importChunk(start) {
+    if (start >= toImport.length) {
+      if (progEl) progEl.textContent = 'Done — '+imported+' imported.';
+      db.collection('fg_registry_audit').doc(String(Date.now())).set({
+        ts: Date.now(), by: currentUser.email, role: currentRole,
+        type: 'BARCODE_BULK_IMPORT', count: imported, errors: errors
+      });
+      barcodeImportDraft = null;
+      alert('Imported '+imported+' barcodes successfully.');
+      renderMain();
+      return;
+    }
+    var batch = db.batch();
+    var chunk = toImport.slice(start, start + BATCH_SIZE);
+    var now = Date.now();
+    chunk.forEach(function(p) {
+      // Use barcode as document ID for uniqueness
+      var ref = db.collection('fg_registry_barcodes').doc(p.barcode);
+      batch.set(ref, {
+        barcode: p.barcode,
+        oldName: p.oldName || '',
+        newName: p.newName || '',
+        status: 'available',
+        fgId: '',
+        fgName: '',
+        createdTs: now,
+        createdBy: currentUser.email
+      });
+    });
+    batch.commit().then(function() {
+      imported += chunk.length;
+      if (progEl) progEl.textContent = 'Importing '+imported+' / '+toImport.length+'...';
+      importChunk(start + BATCH_SIZE);
+    }).catch(function(err) {
+      errors.push({ chunk: start, error: err.message });
+      if (progEl) progEl.textContent = 'Error: ' + err.message;
+      console.error(err);
+    });
+  }
+  importChunk(0);
+}
+
+function openAllocateBarcode(barcodeId) {
+  var b = barcodeList.find(function(x) { return x._id === barcodeId; });
+  if (!b) return;
+
+  // Filter FGs to Veridian sub-brands only that are active
+  var eligibleFGs = fgList.filter(function(f) {
+    return f.active !== false && VERIDIAN_BRANDS.indexOf(f.subBrand) > -1;
+  });
+
+  // Pre-suggest match by name
+  var suggestion = null;
+  var newNameLower = (b.newName || '').toLowerCase().trim();
+  if (newNameLower) {
+    suggestion = eligibleFGs.find(function(f) {
+      return (f.name || '').toLowerCase() === newNameLower
+        || (f.displayName || '').toLowerCase() === newNameLower
+        || newNameLower.indexOf((f.name || '').toLowerCase()) > -1
+        || (f.name || '').toLowerCase().indexOf(newNameLower) > -1;
+    });
+  }
+
+  var html = '<div class="modal-bd" onclick="if(event.target===this)closeModal()">';
+  html += '<div class="modal">';
+  html += '<div class="modal-hdr"><div class="modal-title">Allocate barcode '+escHtml(b.barcode)+'</div></div>';
+  html += '<div class="modal-body">';
+  html += '<div style="margin-bottom:14px;font-size:11px">';
+  html += '<div><strong>Old Name:</strong> '+escHtml(b.oldName||'—')+'</div>';
+  html += '<div><strong>New Name (from import):</strong> '+escHtml(b.newName||'—')+'</div>';
+  html += '</div>';
+  html += '<div class="form-row"><label>Link to canonical FG (Veridian only) *</label>';
+  html += '<select id="alloc-fg-id">';
+  html += '<option value="">— Select FG —</option>';
+  eligibleFGs.forEach(function(f) {
+    var sel = suggestion && suggestion._id === f._id ? ' selected' : '';
+    html += '<option value="'+escAttr(f._id)+'"'+sel+'>['+escHtml(f.subBrand)+'] '+escHtml(f.name)+'</option>';
+  });
+  html += '</select></div>';
+  if (eligibleFGs.length === 0) {
+    html += '<div class="banner warn">No active Veridian-brand FGs in Registry. Add one first.</div>';
+  } else if (suggestion) {
+    html += '<div class="banner good">Auto-suggested: <strong>'+escHtml(suggestion.name)+'</strong></div>';
+  }
+  html += '<div id="alloc-err" style="color:var(--bad);font-size:11px;min-height:14px;margin-top:8px"></div>';
+  html += '</div>';
+  html += '<div class="modal-foot">';
+  html += '<button onclick="closeModal()">Cancel</button>';
+  html += '<button class="primary" onclick="confirmAllocateBarcode(\''+barcodeId+'\')">Allocate →</button>';
+  html += '</div></div></div>';
+  document.getElementById('modal-container').innerHTML = html;
+}
+
+function confirmAllocateBarcode(barcodeId) {
+  var fgId = document.getElementById('alloc-fg-id').value;
+  var err = document.getElementById('alloc-err');
+  err.textContent = '';
+  if (!fgId) return err.textContent = 'Select an FG';
+  var fg = fgList.find(function(x) { return x._id === fgId; });
+  if (!fg) return err.textContent = 'Selected FG not found';
+  var b = barcodeList.find(function(x) { return x._id === barcodeId; });
+  if (!b) return err.textContent = 'Barcode not found';
+
+  var existingAlloc = barcodeList.find(function(x) { return x.fgId === fgId && x.status === 'allocated' && x._id !== barcodeId; });
+  if (existingAlloc) {
+    if (!confirm('FG "'+fg.name+'" already has barcode '+existingAlloc.barcode+' allocated. Continue?')) return;
+  }
+
+  var now = Date.now();
+  var cfg = ROLE_CONFIG[currentRole];
+
+  if (cfg.requiresApproval) {
+    db.collection('fg_registry_pending').add({
+      proposalType: 'BARCODE_ALLOCATE',
+      proposedBy: currentUser.email,
+      proposedRole: currentRole,
+      proposedTs: now,
+      status: 'AWAITING',
+      barcodeId: barcodeId,
+      barcode: b.barcode,
+      fgId: fgId,
+      fgName: fg.name,
+      payload: { fgId: fgId, fgName: fg.name, fgBrand: fg.brand, fgSubBrand: fg.subBrand }
+    }).then(function() {
+      closeModal();
+      alert('Allocation proposed for approval.\n\n'+b.barcode+' → '+fg.name);
+    }).catch(function(e) { err.textContent = 'Failed: ' + e.message; });
+  } else {
+    var batch = db.batch();
+    batch.update(db.collection('fg_registry_barcodes').doc(barcodeId), {
+      status: 'allocated', fgId: fgId, fgName: fg.name,
+      fgBrand: fg.brand, fgSubBrand: fg.subBrand,
+      allocatedTs: now, allocatedBy: currentUser.email
+    });
+    batch.set(db.collection('fg_registry_audit').doc(String(now)), {
+      ts: now, by: currentUser.email, role: currentRole,
+      type: 'BARCODE_ALLOCATE', barcodeId: barcodeId, fgId: fgId, fgName: fg.name
+    });
+    batch.commit().then(function() { closeModal(); })
+      .catch(function(e) { err.textContent = 'Failed: ' + e.message; });
+  }
+}
+
+function releaseBarcode(barcodeId) {
+  var b = barcodeList.find(function(x) { return x._id === barcodeId; });
+  if (!b) return;
+  if (!confirm('Release barcode '+b.barcode+' from "'+b.fgName+'"?')) return;
+  var now = Date.now();
+  var cfg = ROLE_CONFIG[currentRole];
+
+  if (cfg.requiresApproval) {
+    db.collection('fg_registry_pending').add({
+      proposalType: 'BARCODE_RELEASE',
+      proposedBy: currentUser.email,
+      proposedRole: currentRole,
+      proposedTs: now,
+      status: 'AWAITING',
+      barcodeId: barcodeId,
+      barcode: b.barcode,
+      previousFG: b.fgName
+    }).then(function() {
+      alert('Release proposed for approval.');
+    }).catch(function(e) { alert('Failed: ' + e.message); });
+  } else {
+    var batch = db.batch();
+    batch.update(db.collection('fg_registry_barcodes').doc(barcodeId), {
+      status: 'available', fgId: '', fgName: '', fgBrand: '', fgSubBrand: '',
+      releasedTs: now, releasedBy: currentUser.email
+    });
+    batch.set(db.collection('fg_registry_audit').doc(String(now)), {
+      ts: now, by: currentUser.email, role: currentRole,
+      type: 'BARCODE_RELEASE', barcodeId: barcodeId, barcode: b.barcode, previousFG: b.fgName
+    });
+    batch.commit().catch(function(e) { alert('Failed: ' + e.message); });
+  }
+}
+
+function renderImportBarcodePreview() { renderMain(); }
+
+
+// ============= APPROVALS TAB (Founders) =============
+function renderApprovals() {
+  var main = document.getElementById('main');
+  if (!ROLE_CONFIG[currentRole].canApprove) {
+    main.innerHTML = '<div class="banner warn">Only Founders can approve.</div>';
+    return;
+  }
+
+  var html = '<div class="page-title"><h1>Pending Approvals</h1>' +
+    '<div class="sub">Review and approve/reject changes proposed by Editors. ' + pendingList.length + ' pending.</div></div>';
+
+  if (pendingList.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">✓</div>No pending proposals. All caught up.</div>';
+    main.innerHTML = html;
+    return;
+  }
+
+  pendingList.forEach(function(p) {
+    html += renderProposalCard(p, true);
+  });
+  main.innerHTML = html;
+}
+
+function renderMyProposals() {
+  var main = document.getElementById('main');
+  var myPending = pendingList.filter(function(p) { return p.proposedBy === currentUser.email; });
+
+  var html = '<div class="page-title"><h1>My Proposals</h1>' +
+    '<div class="sub">Track changes you\'ve proposed. Pending await Founders approval.</div></div>';
+
+  if (myPending.length === 0) {
+    html += '<div class="empty"><div class="empty-icon">📋</div>No pending proposals from you. Loading recent history...</div>';
+  } else {
+    html += '<h3 style="font-size:13px;margin-bottom:10px">Pending ('+myPending.length+')</h3>';
+    myPending.forEach(function(p) {
+      html += renderProposalCard(p, false);
+    });
+  }
+
+  main.innerHTML = html;
+
+  db.collection('fg_registry_pending')
+    .where('proposedBy', '==', currentUser.email)
+    .orderBy('proposedTs', 'desc')
+    .limit(50)
+    .get().then(function(snap) {
+      var history = [];
+      snap.forEach(function(d) {
+        var data = d.data();
+        if (data.status !== 'AWAITING') history.push(Object.assign({_id:d.id}, data));
+      });
+      if (history.length > 0) {
+        var histHtml = '<h3 style="font-size:13px;margin:24px 0 10px">Recent history ('+history.length+')</h3>';
+        history.forEach(function(p) {
+          histHtml += renderProposalCard(p, false);
+        });
+        main.innerHTML += histHtml;
+      }
+    }).catch(function(e) {
+      console.warn('History fetch failed (may need composite index):', e.message);
+    });
+}
+
+function renderProposalCard(p, showActions) {
+  var statusBadge = '<span class="pill pill-' +
+    (p.status === 'AWAITING' ? 'warn' : p.status === 'APPROVED' ? 'good' : 'muted') +
+    '">' + p.status + '</span>';
+
+  var typeLabel = {
+    'ADD': 'Add new FG', 'EDIT': 'Edit FG',
+    'ACTIVATE': 'Activate FG', 'DEACTIVATE': 'Deactivate FG',
+    'BARCODE_ALLOCATE': 'Allocate barcode', 'BARCODE_RELEASE': 'Release barcode'
+  }[p.proposalType] || p.proposalType;
+
+  var html = '<div class="proposal-card '+p.status+'">';
+  html += '<div class="proposal-hdr">';
+  html += '<div><strong style="font-size:13px;color:var(--accent)">'+escHtml(typeLabel)+'</strong> ' + statusBadge;
+  html += '<div class="proposal-meta">Proposed by <strong>'+escHtml(p.proposedBy||'')+'</strong> · '+formatTs(p.proposedTs)+'</div></div>';
+  html += '</div>';
+
+  if (p.proposalType === 'ADD' && p.payload) {
+    html += '<div style="font-size:11px;margin-top:6px"><strong>'+escHtml(p.payload.name||'')+'</strong></div>';
+    html += '<div class="diff-row"><span class="lbl">Brand</span><span class="val">'+escHtml(p.payload.brand||'')+' / '+escHtml(p.payload.subBrand||'')+'</span></div>';
+    html += '<div class="diff-row"><span class="lbl">Code</span><span class="val mono">'+escHtml(p.payload.code||'(none)')+'</span></div>';
+    html += '<div class="diff-row"><span class="lbl">Type</span><span class="val">'+escHtml(p.payload.type||'')+'</span></div>';
+    if (p.payload.aliases && p.payload.aliases.length) {
+      html += '<div class="diff-row"><span class="lbl">Aliases</span><span class="val">'+escHtml(p.payload.aliases.join(', '))+'</span></div>';
+    }
+  } else if (p.proposalType === 'EDIT' && p.payload) {
+    html += '<div class="diff-grid">';
+    html += '<div class="diff-col before"><h5>Current</h5>';
+    if (p.original) {
+      ['name','code','brand','subBrand','type'].forEach(function(k) {
+        var changed = p.original[k] !== p.payload[k];
+        html += '<div class="diff-row '+(changed?'changed':'')+'"><span class="lbl">'+k+'</span><span class="val">'+escHtml(p.original[k]||'—')+'</span></div>';
+      });
+      var origAl = (p.original.aliases||[]).join(', ');
+      var newAl = (p.payload.aliases||[]).join(', ');
+      if (origAl !== newAl) {
+        html += '<div class="diff-row changed"><span class="lbl">aliases</span><span class="val">'+escHtml(origAl||'—')+'</span></div>';
+      }
+    }
+    html += '</div>';
+    html += '<div class="diff-col after"><h5>Proposed</h5>';
+    ['name','code','brand','subBrand','type'].forEach(function(k) {
+      var changed = !p.original || p.original[k] !== p.payload[k];
+      html += '<div class="diff-row '+(changed?'changed':'')+'"><span class="lbl">'+k+'</span><span class="val">'+escHtml(p.payload[k]||'—')+'</span></div>';
+    });
+    var newAl2 = (p.payload.aliases||[]).join(', ');
+    var origAl2 = p.original ? (p.original.aliases||[]).join(', ') : '';
+    if (origAl2 !== newAl2) {
+      html += '<div class="diff-row changed"><span class="lbl">aliases</span><span class="val">'+escHtml(newAl2||'—')+'</span></div>';
+    }
+    html += '</div></div>';
+  } else if (p.proposalType === 'ACTIVATE' || p.proposalType === 'DEACTIVATE') {
+    var origName = (p.original && p.original.name) || '(unknown)';
+    html += '<div style="font-size:11px;margin-top:6px"><strong>'+escHtml(origName)+'</strong> → '+
+      (p.proposalType === 'ACTIVATE' ? '<span style="color:var(--good)">ACTIVE</span>' : '<span style="color:var(--warn)">INACTIVE</span>')+
+      '</div>';
+  } else if (p.proposalType === 'BARCODE_ALLOCATE') {
+    html += '<div style="font-size:11px;margin-top:6px"><span class="mono" style="color:var(--accent)">'+escHtml(p.barcode||'')+'</span> → <strong>'+escHtml(p.fgName||'')+'</strong></div>';
+  } else if (p.proposalType === 'BARCODE_RELEASE') {
+    html += '<div style="font-size:11px;margin-top:6px">Release <span class="mono" style="color:var(--accent)">'+escHtml(p.barcode||'')+'</span> from <strong>'+escHtml(p.previousFG||'')+'</strong></div>';
+  }
+
+  if (p.rejectionReason) {
+    html += '<div style="margin-top:10px;padding:8px;background:rgba(255,107,107,0.08);border-radius:4px;font-size:11px"><strong>Rejection reason:</strong> '+escHtml(p.rejectionReason)+'</div>';
+  }
+  if (p.approvedTs) {
+    html += '<div style="margin-top:8px;font-size:10px;color:var(--ink-3)">Approved by '+escHtml(p.approvedBy||'')+' · '+formatTs(p.approvedTs)+'</div>';
+  }
+  if (p.rejectedTs) {
+    html += '<div style="margin-top:8px;font-size:10px;color:var(--ink-3)">Rejected by '+escHtml(p.rejectedBy||'')+' · '+formatTs(p.rejectedTs)+'</div>';
+  }
+
+  if (showActions && p.status === 'AWAITING') {
+    html += '<div class="proposal-actions">';
+    html += '<button class="primary" onclick="approveProposal(\''+p._id+'\')">✓ Approve</button>';
+    html += '<button class="danger" onclick="rejectProposalPrompt(\''+p._id+'\')">✗ Reject</button>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function approveProposal(proposalId) {
+  var p = pendingList.find(function(x) { return x._id === proposalId; });
+  if (!p) { alert('Proposal not found'); return; }
+  if (!confirm('Approve and apply: '+(p.proposalType||'')+'?')) return;
+
+  var now = Date.now();
+  var batch = db.batch();
+
+  if (p.proposalType === 'ADD') {
+    var newDoc = Object.assign({}, p.payload, {
+      createdTs: now, createdBy: p.proposedBy,
+      updatedTs: now, updatedBy: currentUser.email,
+      approvedBy: currentUser.email, approvedTs: now
+    });
+    var newRef = db.collection('fg_registry').doc();
+    batch.set(newRef, newDoc);
+  } else if (p.proposalType === 'EDIT') {
+    var update = Object.assign({}, p.payload, {
+      updatedTs: now, updatedBy: currentUser.email,
+      lastApprovedBy: currentUser.email, lastApprovedTs: now
+    });
+    batch.update(db.collection('fg_registry').doc(p.fgId), update);
+  } else if (p.proposalType === 'ACTIVATE' || p.proposalType === 'DEACTIVATE') {
+    batch.update(db.collection('fg_registry').doc(p.fgId), {
+      active: p.payload.active,
+      updatedTs: now, updatedBy: currentUser.email,
+      lastStatusChange: { ts: now, by: currentUser.email, role: currentRole,
+        toStatus: p.payload.active?'active':'inactive', proposedBy: p.proposedBy }
+    });
+  } else if (p.proposalType === 'BARCODE_ALLOCATE') {
+    batch.update(db.collection('fg_registry_barcodes').doc(p.barcodeId), Object.assign({}, p.payload, {
+      status: 'allocated',
+      allocatedTs: now, allocatedBy: p.proposedBy,
+      approvedBy: currentUser.email, approvedTs: now
+    }));
+  } else if (p.proposalType === 'BARCODE_RELEASE') {
+    batch.update(db.collection('fg_registry_barcodes').doc(p.barcodeId), {
+      status: 'available', fgId: '', fgName: '', fgBrand: '', fgSubBrand: '',
+      releasedTs: now, releasedBy: p.proposedBy,
+      approvedBy: currentUser.email, approvedTs: now
+    });
+  }
+
+  batch.update(db.collection('fg_registry_pending').doc(proposalId), {
+    status: 'APPROVED', approvedBy: currentUser.email, approvedTs: now
+  });
+
+  batch.set(db.collection('fg_registry_audit').doc(String(now)), {
+    ts: now, by: currentUser.email, role: currentRole,
+    type: 'APPROVE_'+p.proposalType,
+    proposalId: proposalId, proposedBy: p.proposedBy
+  });
+
+  batch.commit().catch(function(e) { alert('Approve failed: '+e.message); });
+}
+
+function rejectProposalPrompt(proposalId) {
+  var reason = prompt('Reason for rejection (visible to proposer):');
+  if (reason === null) return;
+  if (!reason.trim()) { alert('Reason required'); return; }
+  var now = Date.now();
+  var batch = db.batch();
+  batch.update(db.collection('fg_registry_pending').doc(proposalId), {
+    status: 'REJECTED', rejectedBy: currentUser.email,
+    rejectedTs: now, rejectionReason: reason.trim()
+  });
+  var p = pendingList.find(function(x) { return x._id === proposalId; });
+  batch.set(db.collection('fg_registry_audit').doc(String(now)), {
+    ts: now, by: currentUser.email, role: currentRole,
+    type: 'REJECT_'+(p ? p.proposalType : 'UNKNOWN'),
+    proposalId: proposalId, proposedBy: p ? p.proposedBy : '', reason: reason.trim()
+  });
+  batch.commit().catch(function(e) { alert('Reject failed: '+e.message); });
+}
+
+
+function renderAudit() {
+  var main = document.getElementById('main');
+  main.innerHTML = '<div class="page-title"><h1>Audit Log</h1><div class="sub">Loading...</div></div>';
+  db.collection('fg_registry_audit').orderBy('ts','desc').limit(100).get().then(function(snap) {
+    var entries = [];
+    snap.forEach(function(d) { entries.push(d.data()); });
+    var html = '<div class="page-title"><h1>Audit Log</h1>' +
+      '<div class="sub">Last 100 changes to the FG Registry.</div></div>';
+    html += '<div class="panel">';
+    if (entries.length === 0) {
+      html += '<div class="empty"><div class="empty-icon">📋</div>No audit entries yet</div>';
+    } else {
+      entries.forEach(function(e) {
+        var desc = describeAuditEntry(e);
+        html += '<div class="audit-row">';
+        html += '<div class="who">'+escHtml((e.role||'')+' · '+(e.by||'').split('@')[0])+'</div>';
+        html += '<div>'+desc+'</div>';
+        html += '<div class="ts">'+formatTs(e.ts)+'</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+    main.innerHTML = html;
+  }).catch(function(err) {
+    main.innerHTML = '<div class="banner bad">Failed to load: '+escHtml(err.message)+'</div>';
+  });
+}
+
+function describeAuditEntry(e) {
+  if (e.type === 'BULK_IMPORT') return '<strong style="color:var(--accent)">Bulk import</strong> — '+e.count+' FGs added'+(e.errors&&e.errors.length?' ('+e.errors.length+' errors)':'');
+  if (e.type === 'ADD') return '<strong>'+escHtml(e.name||'')+'</strong> — added';
+  if (e.type === 'EDIT') return '<strong>'+escHtml(e.name||'')+'</strong> — edited';
+  if (e.type === 'ACTIVATE') return '<strong>'+escHtml(e.name||'')+'</strong> — <span style="color:var(--good)">activated</span>';
+  if (e.type === 'DEACTIVATE') return '<strong>'+escHtml(e.name||'')+'</strong> — <span style="color:var(--warn)">deactivated</span>';
+  if (e.type === 'BARCODE_BULK_IMPORT') return '<strong style="color:var(--accent)">Barcode bulk import</strong> — '+e.count+' barcodes added';
+  if (e.type === 'BARCODE_ALLOCATE') return 'Barcode allocated to <strong>'+escHtml(e.fgName||'')+'</strong>';
+  if (e.type === 'BARCODE_RELEASE') return 'Barcode '+escHtml(e.barcode||'')+' released from <strong>'+escHtml(e.previousFG||'')+'</strong>';
+  return e.type;
+}
+
+// ============= HELPERS =============
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function escAttr(s) { return escHtml(s).replace(/'/g, '&#39;'); }
+function formatTs(ts) {
+  if (!ts) return '—';
+  var d = new Date(ts);
+  return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+</script>
+</body>
+</html>
