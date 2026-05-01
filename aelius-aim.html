@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0f1419" />
+<title>Aelius AIM — Asset & Inventory Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #0f1419;
+  --bg-elev: #161c23;
+  --bg-card: #1c232c;
+  --bg-input: #232b35;
+  --border: #2a333e;
+  --border-strong: #3a4550;
+  --text: #e8eaed;
+  --text-dim: #9aa3ad;
+  --text-faint: #6b7480;
+  --accent: #d4a574;       /* warm sand */
+  --accent-soft: #d4a57422;
+  --success: #6bc795;
+  --warning: #e8b658;
+  --danger: #e87b6b;
+  --info: #7aa8d4;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 4px 16px rgba(0,0,0,0.4);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter Tight', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+/* ===================== AUTH SCREEN ===================== */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse at top, rgba(212,165,116,0.08), transparent 60%),
+    radial-gradient(ellipse at bottom, rgba(122,168,212,0.05), transparent 60%),
+    var(--bg);
+}
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow);
+}
+.auth-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.auth-brand .logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+.auth-brand .logo em {
+  font-style: italic;
+  color: var(--text);
+}
+.auth-brand .tagline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
+.auth-brand .subtitle {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
+.field textarea { min-height: 70px; resize: vertical; font-family: var(--font-body); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--accent); }
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  background: var(--accent);
+  color: #1a1410;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn-primary:hover { background: #e0b889; border-color: #e0b889; }
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.btn-danger:hover { background: var(--danger); color: white; }
+.btn-block { width: 100%; }
+.btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn-icon { padding: 8px; min-width: 36px; }
+
+.auth-error, .auth-info {
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 12px;
+  display: none;
+}
+.auth-error { background: rgba(232,123,107,0.1); color: var(--danger); border: 1px solid rgba(232,123,107,0.3); }
+.auth-info { background: rgba(122,168,212,0.1); color: var(--info); border: 1px solid rgba(122,168,212,0.3); }
+.auth-error.show, .auth-info.show { display: block; }
+
+.auth-toggle {
+  text-align: center;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.auth-toggle a {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+}
+.auth-toggle a:hover { text-decoration: underline; }
+
+/* ===================== APP LAYOUT ===================== */
+.app { display: none; min-height: 100vh; flex-direction: column; }
+.app.active { display: flex; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar .brand {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.topbar .brand em { font-style: italic; color: var(--text); }
+.topbar .user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.topbar .user .email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabs {
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab .badge {
+  display: inline-block;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.main { flex: 1; padding: 16px; max-width: 1400px; width: 100%; margin: 0 auto; }
+
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.2s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.section-head h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.section-head .actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===================== STATS GRID ===================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--accent);
+}
+.stat .label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+.stat .value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+.stat .sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.stat.success::before { background: var(--success); }
+.stat.warning::before { background: var(--warning); }
+.stat.info::before { background: var(--info); }
+
+/* ===================== FILTERS ===================== */
+.filters {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+.filters input, .filters select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
+
+/* ===================== ASSET LIST (DESKTOP TABLE) ===================== */
+.table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.table-scroll { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: rgba(212,165,116,0.04); cursor: pointer; }
+tbody tr:last-child td { border-bottom: none; }
+
+.code-cell { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+.muted { color: var(--text-dim); font-size: 12px; }
+
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--bg-elev);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.chip.in-store { background: rgba(122,168,212,0.12); color: var(--info); border-color: rgba(122,168,212,0.3); }
+.chip.issued { background: rgba(212,165,116,0.12); color: var(--accent); border-color: rgba(212,165,116,0.3); }
+.chip.returned { background: rgba(107,199,149,0.12); color: var(--success); border-color: rgba(107,199,149,0.3); }
+.chip.sold { background: rgba(168,122,212,0.12); color: #a87ad4; border-color: rgba(168,122,212,0.3); }
+.chip.disposed { background: rgba(232,123,107,0.12); color: var(--danger); border-color: rgba(232,123,107,0.3); }
+.chip.repair { background: rgba(232,182,88,0.12); color: var(--warning); border-color: rgba(232,182,88,0.3); }
+
+.cat-it { color: var(--info); }
+.cat-furniture { color: var(--accent); }
+.cat-spares { color: var(--success); }
+.cat-other { color: var(--text-dim); }
+
+.empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 13px;
+}
+.empty .icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+
+/* ===================== MOBILE CARDS ===================== */
+.cards { display: none; flex-direction: column; gap: 8px; }
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+}
+.card:active { background: var(--bg-elev); }
+.card .top { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.card .name { font-weight: 600; font-size: 14px; }
+.card .code { font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 2px; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+.card .meta strong { color: var(--text); font-weight: 500; }
+
+/* ===================== MODAL ===================== */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(8,12,16,0.7);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  backdrop-filter: blur(2px);
+}
+.modal-backdrop.show { display: flex; }
+.modal {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  box-shadow: var(--shadow);
+  animation: modalIn 0.2s;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.modal-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-head h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  flex: 1;
+}
+.modal-body { padding: 18px 20px; max-height: 70vh; overflow-y: auto; }
+.modal-foot {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.close-x {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.close-x:hover { color: var(--text); background: var(--bg-card); }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-grid .full { grid-column: 1 / -1; }
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-row .k { color: var(--text-faint); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; padding-top: 2px; }
+.detail-row .v { color: var(--text); }
+.detail-row .v.code { font-family: var(--font-mono); color: var(--accent); }
+
+.history-item {
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.history-item .when { color: var(--text-faint); font-family: var(--font-mono); font-size: 10px; }
+.history-item .what { color: var(--text); margin-top: 2px; }
+
+.toast-wrap {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  min-width: 220px;
+  max-width: 90vw;
+  animation: toastIn 0.25s;
+  pointer-events: auto;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+
+/* ===================== CONFIG NOTICE ===================== */
+.config-notice {
+  background: rgba(232,182,88,0.08);
+  border: 1px solid rgba(232,182,88,0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--warning);
+  margin-bottom: 12px;
+}
+.config-notice strong { color: var(--text); }
+.config-notice code { font-family: var(--font-mono); font-size: 11px; background: var(--bg-card); padding: 1px 6px; border-radius: 3px; }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+  .main { padding: 12px; }
+  .section-head h2 { font-size: 18px; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .table-wrap { display: none; }
+  .cards { display: flex; }
+  .form-grid { grid-template-columns: 1fr; }
+  .modal { max-width: 100%; margin: 0; border-radius: 12px 12px 0 0; align-self: flex-end; }
+  .modal-backdrop { padding: 0; align-items: flex-end; }
+  .topbar .user .email { max-width: 100px; }
+  .stat .value { font-size: 22px; }
+  .detail-row { grid-template-columns: 100px 1fr; }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .filters { grid-template-columns: 1fr; }
+  .topbar { padding: 8px 12px; }
+  .topbar .brand { font-size: 16px; }
+  .section-head .actions { width: 100%; }
+  .section-head .actions .btn { flex: 1; }
+}
+
+/* Loader */
+.loader {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.center-loader {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-dim);
+}
+
+/* ===================== ROLE BADGE ===================== */
+.role-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+}
+.role-badge.management { color: var(--accent); border-color: rgba(212,165,116,0.4); }
+.role-badge.operator   { color: var(--info);   border-color: rgba(122,168,212,0.4); }
+.role-badge.audit      { color: var(--success); border-color: rgba(107,199,149,0.4); }
+
+.badge.danger-badge { background: var(--danger); color: white; }
+
+/* ===================== PENDING / APPROVAL UI ===================== */
+.chip.pending { background: rgba(232,182,88,0.15); color: var(--warning); border-color: rgba(232,182,88,0.4); }
+.chip.approved { background: rgba(107,199,149,0.12); color: var(--success); border-color: rgba(107,199,149,0.3); }
+.chip.rejected { background: rgba(232,123,107,0.12); color: var(--danger); border-color: rgba(232,123,107,0.3); }
+
+.pending-row { background: rgba(232,182,88,0.04); }
+.pending-row:hover { background: rgba(232,182,88,0.08) !important; }
+
+.approval-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.approval-card .head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.approval-card .action-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warning);
+  font-weight: 600;
+}
+.approval-card .asset-name { font-weight: 600; font-size: 14px; }
+.approval-card .by-line {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: auto;
+  font-family: var(--font-mono);
+}
+.approval-card .changes {
+  background: var(--bg-elev);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.approval-card .changes .field-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+  align-items: baseline;
+}
+.approval-card .changes .field-row:last-child { border-bottom: none; }
+.approval-card .changes .k { color: var(--text-faint); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.approval-card .changes .from { color: var(--text-dim); text-decoration: line-through; }
+.approval-card .changes .to   { color: var(--text); font-weight: 500; }
+.approval-card .changes .arrow { color: var(--accent); margin: 0 4px; }
+.approval-card .controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.btn-approve { background: var(--success); color: #0a1810; border-color: var(--success); font-weight: 600; }
+.btn-approve:hover { background: #7dd0a3; border-color: #7dd0a3; }
+.btn-reject { background: transparent; color: var(--danger); border-color: var(--danger); }
+.btn-reject:hover { background: var(--danger); color: white; }
+
+.action-banner {
+  background: rgba(232,182,88,0.08);
+  border: 1px solid rgba(232,182,88,0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--warning);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.action-banner .ico { font-size: 14px; }
+
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:disabled:hover { border-color: var(--border-strong); }
+
+@media (max-width: 768px) {
+  .approval-card .changes .field-row { grid-template-columns: 1fr; gap: 2px; }
+  .approval-card .changes .arrow { display: none; }
+  .approval-card .head { flex-wrap: wrap; }
+  .approval-card .by-line { margin-left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============== AUTH SCREEN ============== -->
+<div class="auth-wrap" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo">Aelius<em> AIM</em></div>
+      <div class="tagline">Asset · Inventory · Manager</div>
+      <div class="subtitle" id="authSubtitle">Sign in to continue</div>
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:10px; line-height:1.7; text-align:left; padding: 8px 12px; background:var(--bg-card); border-radius:5px; border:1px solid var(--border);">
+        <div><span style="color:var(--accent);">●</span> sankalp.chopra · <em>Management</em></div>
+        <div><span style="color:var(--info);">●</span> aim · <em>Operator</em></div>
+        <div><span style="color:var(--success);">●</span> accounts · <em>Audit (read-only)</em></div>
+      </div>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-info" id="authInfo"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" autocomplete="email" placeholder="you@aeliusparallel.com" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••" />
+    </div>
+    <div class="field" id="authNameField" style="display:none;">
+      <label>Display Name</label>
+      <input type="text" id="authName" placeholder="Your name (e.g., Sankalp)" />
+    </div>
+
+    <button class="btn btn-primary btn-block" id="authSubmit">Sign In</button>
+
+    <div class="auth-toggle">
+      <span id="authToggleText">First time here?</span>
+      <a id="authToggle">Create account</a>
+    </div>
+    <div class="auth-toggle" style="margin-top:6px;">
+      <a id="authForgot">Forgot password?</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============== APP ============== -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="brand">Aelius<em> AIM</em></div>
+    <div class="user">
+      <span id="roleBadge" class="role-badge"></span>
+      <span class="email" id="userEmail"></span>
+      <button class="btn btn-sm" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">Dashboard</div>
+    <div class="tab" data-tab="registry">Registry <span class="badge" id="badgeCount">0</span></div>
+    <div class="tab" data-tab="approvals" id="tabApprovals" style="display:none;">Approvals <span class="badge danger-badge" id="badgePending">0</span></div>
+    <div class="tab" data-tab="issuance">Audit Trail</div>
+    <div class="tab" data-tab="people">Employees & Locations</div>
+  </div>
+
+  <div class="main">
+
+    <!-- ====== DASHBOARD ====== -->
+    <section class="section active" id="sec-dashboard">
+      <div class="section-head">
+        <h2>Overview</h2>
+        <div class="actions">
+          <button class="btn btn-sm" id="exportBtn">⬇ Export CSV</button>
+          <button class="btn btn-primary btn-sm" id="newAssetBtnDash">+ New Asset</button>
+        </div>
+      </div>
+      <div id="configNotice"></div>
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="section-head" style="margin-top:24px;">
+        <h2 style="font-size:16px;">Recent Activity</h2>
+      </div>
+      <div class="table-wrap">
+        <div id="recentActivity" style="padding: 14px;"></div>
+      </div>
+    </section>
+
+    <!-- ====== REGISTRY ====== -->
+    <section class="section" id="sec-registry">
+      <div class="section-head">
+        <h2>Asset Registry</h2>
+        <div class="actions">
+          <button class="btn btn-sm" id="importBtn" style="display:none;">⬆ Import Excel</button>
+          <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" />
+          <button class="btn btn-sm" id="exportBtn2">⬇ Export</button>
+          <button class="btn btn-primary btn-sm" id="newAssetBtn">+ New Asset</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="searchInput" placeholder="Search by name, code, serial, employee…" />
+        <select id="filterCategory">
+          <option value="">All Categories</option>
+          <option value="IT/Electronics">IT / Electronics</option>
+          <option value="Office Furniture">Office Furniture</option>
+          <option value="Spare Parts">Spare Parts</option>
+          <option value="Manufacturing Equipment">Manufacturing Equipment</option>
+          <option value="Stationery">Stationery</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="filterStatus">
+          <option value="">All Status</option>
+          <option value="In Store">In Store</option>
+          <option value="Issued">Issued</option>
+          <option value="In Repair">In Repair</option>
+          <option value="Returned">Returned</option>
+          <option value="Sold">Sold</option>
+          <option value="Disposed">Disposed</option>
+        </select>
+        <select id="filterLocation">
+          <option value="">All Locations</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="assetTable">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Issued To</th>
+                <th>Location</th>
+                <th>Bought</th>
+                <th>Price</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="assetTbody"></tbody>
+          </table>
+        </div>
+        <div class="cards" id="assetCards" style="padding: 0;"></div>
+      </div>
+    </section>
+
+    <!-- ====== APPROVALS (Management only) ====== -->
+    <section class="section" id="sec-approvals">
+      <div class="section-head">
+        <h2>Pending Approvals</h2>
+        <div class="actions">
+          <span class="muted" id="approvalCount" style="font-size:12px;"></span>
+        </div>
+      </div>
+      <div id="approvalsList"></div>
+    </section>
+
+    <!-- ====== AUDIT TRAIL ====== -->
+    <section class="section" id="sec-issuance">
+      <div class="section-head">
+        <h2>Audit Trail</h2>
+        <div class="actions">
+          <span class="muted" style="font-size:12px;">Immutable · all actions logged</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Asset</th>
+                <th>Action</th>
+                <th>Detail</th>
+                <th>Proposed By</th>
+                <th>Status</th>
+                <th>Approved/Rejected By</th>
+              </tr>
+            </thead>
+            <tbody id="issuanceTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== PEOPLE & LOCATIONS ====== -->
+    <section class="section" id="sec-people">
+      <div class="section-head">
+        <h2>Employees & Locations</h2>
+        <div class="actions">
+          <button class="btn btn-sm" id="addPersonBtn">+ Employee</button>
+          <button class="btn btn-sm" id="addLocationBtn">+ Location</button>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;" id="peopleLocGrid">
+        <div class="table-wrap">
+          <div style="padding:12px 14px; background:var(--bg-elev); border-bottom:1px solid var(--border); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint);">Employees</div>
+          <div id="peopleList" style="padding:8px;"></div>
+        </div>
+        <div class="table-wrap">
+          <div style="padding:12px 14px; background:var(--bg-elev); border-bottom:1px solid var(--border); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint);">Locations / Offices</div>
+          <div id="locationList" style="padding:8px;"></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============== ASSET MODAL ============== -->
+<div class="modal-backdrop" id="assetModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="assetModalTitle">New Asset</h3>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalBanner"></div>
+      <input type="hidden" id="assetId" />
+      <div class="form-grid">
+        <div class="field full">
+          <label>Item Name *</label>
+          <input type="text" id="f_name" placeholder="e.g., Dell Latitude 5430 Laptop" />
+        </div>
+        <div class="field">
+          <label>Category *</label>
+          <select id="f_category">
+            <option value="IT/Electronics">IT / Electronics</option>
+            <option value="Office Furniture">Office Furniture</option>
+            <option value="Spare Parts">Spare Parts</option>
+            <option value="Manufacturing Equipment">Manufacturing Equipment</option>
+            <option value="Stationery">Stationery</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Item Code <span style="color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0;">(auto)</span></label>
+          <input type="text" id="f_code" readonly placeholder="auto-allocated on save" style="background:var(--bg-elev); color:var(--text-dim); cursor:not-allowed;" />
+        </div>
+        <div class="field">
+          <label>Brand / Make</label>
+          <input type="text" id="f_brand" placeholder="e.g., Dell, Godrej, Bosch" />
+        </div>
+        <div class="field">
+          <label>Model</label>
+          <input type="text" id="f_model" placeholder="model number" />
+        </div>
+        <div class="field">
+          <label>Serial Number</label>
+          <input type="text" id="f_serial" placeholder="manufacturer serial" />
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <input type="number" id="f_quantity" value="1" min="1" />
+        </div>
+        <div class="field">
+          <label>Bought Date *</label>
+          <input type="date" id="f_boughtDate" />
+        </div>
+        <div class="field">
+          <label>Price (₹) *</label>
+          <input type="number" id="f_price" placeholder="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label>Vendor</label>
+          <input type="text" id="f_vendor" placeholder="supplier name" />
+        </div>
+        <div class="field">
+          <label>Invoice / PO No.</label>
+          <input type="text" id="f_invoice" />
+        </div>
+        <div class="field">
+          <label>Warranty Expiry</label>
+          <input type="date" id="f_warranty" />
+        </div>
+        <div class="field">
+          <label>Status *</label>
+          <select id="f_status">
+            <option value="In Store">In Store</option>
+            <option value="Issued">Issued</option>
+            <option value="In Repair">In Repair</option>
+            <option value="Returned">Returned</option>
+            <option value="Sold">Sold</option>
+            <option value="Disposed">Disposed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Office / Location *</label>
+          <select id="f_location"></select>
+        </div>
+        <div class="field">
+          <label>Issued To (Employee)</label>
+          <select id="f_issuedTo">
+            <option value="">— Not issued —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Issued On</label>
+          <input type="date" id="f_issuedDate" />
+        </div>
+        <div class="field full">
+          <label>Notes / Remarks</label>
+          <textarea id="f_notes" placeholder="Any relevant details, condition, accessories included…"></textarea>
+        </div>
+      </div>
+
+      <div id="historySection" style="margin-top:18px; display:none;">
+        <h4 style="font-family:var(--font-display); font-size:14px; margin-bottom:10px; color:var(--text-dim);">Activity History</h4>
+        <div id="historyList"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="deleteAssetBtn" style="display:none; margin-right:auto;">Delete</button>
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn btn-primary" id="saveAssetBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== DETAIL MODAL ============== -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="detailTitle">Asset Detail</h3>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-sm" id="markReturnedBtn" style="display:none;">↩ Mark Returned</button>
+      <button class="btn btn-sm" id="markSoldBtn" style="display:none;">💰 Mark Sold</button>
+      <button class="btn" data-close>Close</button>
+      <button class="btn btn-primary" id="editFromDetail">Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== SOLD DETAILS MODAL ============== -->
+<div class="modal-backdrop" id="soldModal">
+  <div class="modal" style="max-width: 460px;">
+    <div class="modal-head">
+      <h3>Mark as Sold</h3>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="soldAssetId" />
+      <div class="field">
+        <label>Sale Date *</label>
+        <input type="date" id="soldDate" />
+      </div>
+      <div class="field">
+        <label>Sale Price (₹) *</label>
+        <input type="number" id="soldPrice" step="0.01" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Buyer / Recipient</label>
+        <input type="text" id="soldBuyer" placeholder="Name or company" />
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="soldNotes" placeholder="Sale terms, invoice number, etc."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn btn-primary" id="soldConfirmBtn">Confirm Sale</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== PERSON / LOCATION MODAL ============== -->
+<div class="modal-backdrop" id="entityModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="entityTitle">Add Person</h3>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="entityId" />
+      <input type="hidden" id="entityType" />
+
+      <!-- Person fields (hidden when adding location) -->
+      <div id="personFields">
+        <div class="form-grid">
+          <div class="field full">
+            <label>Full Name *</label>
+            <input type="text" id="entityName" placeholder="e.g., Rohit Chaudhary" />
+          </div>
+          <div class="field">
+            <label>Employee Code</label>
+            <input type="text" id="entityEmpCode" placeholder="e.g., E001" />
+          </div>
+          <div class="field">
+            <label>Date of Joining</label>
+            <input type="date" id="entityJoinDate" />
+          </div>
+          <div class="field full">
+            <label>Company Email</label>
+            <input type="email" id="entityEmail" placeholder="name@aeliusparallel.com" />
+          </div>
+          <div class="field full">
+            <label>Department / Role</label>
+            <input type="text" id="entityExtra" placeholder="e.g., SOPSO, R&D, Procurement" />
+          </div>
+          <div class="field full" id="employeeStatusBlock" style="display:none;">
+            <label>Status</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span id="employeeStatusDisplay" style="padding:5px 10px; border-radius:5px; font-size:12px; font-weight:500;"></span>
+              <button type="button" class="btn btn-sm" id="deactivateEmployeeBtn" style="display:none;">Deactivate Employee</button>
+              <button type="button" class="btn btn-sm" id="reactivateEmployeeBtn" style="display:none;">Reactivate</button>
+            </div>
+            <div class="muted" style="font-size:11px; margin-top:6px;" id="employeeStatusHint"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location fields (hidden when adding person) -->
+      <div id="locationFields" style="display:none;">
+        <div class="field">
+          <label>Location Name *</label>
+          <input type="text" id="entityNameLoc" placeholder="e.g., Manesar Plant, Gurugram Office" />
+        </div>
+        <div class="field">
+          <label>Description / Address</label>
+          <input type="text" id="entityExtraLoc" placeholder="Floor, building, address details" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="entityDeleteBtn" style="display:none; margin-right:auto;">Delete</button>
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn btn-primary" id="entitySaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== IMPORT PREVIEW MODAL ============== -->
+<div class="modal-backdrop" id="importModal">
+  <div class="modal" style="max-width: 720px;">
+    <div class="modal-head">
+      <h3>Import from Excel</h3>
+      <button class="close-x" data-close>×</button>
+    </div>
+    <div class="modal-body">
+      <div id="importSummary"></div>
+      <div id="importPreview"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn btn-primary" id="importCommitBtn" disabled>Import valid rows</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
+  updateDoc, deleteDoc, onSnapshot, query, orderBy, where, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ============================================================
+   FIREBASE CONFIG — aphl-pms-dashboard project
+   Most fields are pre-filled. After registering the new web app
+   in Firebase Console, ONLY replace the appId below.
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDOkvXJMpIShul_WJV8Sj8WbIkOn6U5iMc",
+  authDomain: "aphl-pms-dashboard.firebaseapp.com",
+  projectId: "aphl-pms-dashboard",
+  storageBucket: "aphl-pms-dashboard.firebasestorage.app",
+  messagingSenderId: "306613784090",
+  appId: "1:306613784090:web:a2d99c0e68e8f54708cba3"
+};
+
+/* ============================================================
+   ROLE-BASED ACCESS CONTROL
+   Each user maps to ONE role:
+     - management: full access, approves operator actions, his own actions auto-approved
+     - operator:   can propose all changes, but each goes to Pending until Management approves
+     - audit:      read-only — can view everything including pending, can export, cannot edit
+   Add or remove emails here as the team changes.
+   ============================================================ */
+const ROLE_REGISTRY = {
+  "sankalp.chopra@aeliusparallel.com": { role: "management", display: "Sankalp Chopra" },
+  "aim@aeliusparallel.com":            { role: "operator",   display: "AIM Operator"   },
+  "accounts@aeliusparallel.com":       { role: "audit",      display: "Accounts (Audit)" }
+};
+
+const ROLE_LABELS = {
+  management: { label: "Management",     color: "var(--accent)",   desc: "Full access · Approver" },
+  operator:   { label: "AIM Operator",   color: "var(--info)",     desc: "Proposes changes" },
+  audit:      { label: "Audit / Read",   color: "var(--success)",  desc: "Read-only access" }
+};
+
+const getUserRole = (email) => ROLE_REGISTRY[(email || '').toLowerCase()]?.role || null;
+const isAllowed   = (email) => !!getUserRole(email);
+const isManager   = () => state.user && getUserRole(state.user.email) === 'management';
+const isOperator  = () => state.user && getUserRole(state.user.email) === 'operator';
+const isAuditor   = () => state.user && getUserRole(state.user.email) === 'audit';
+const canEdit     = () => isManager() || isOperator();   // audit cannot edit at all
+const canApprove  = () => isManager();
+
+/* Default people seeded on first login (only if People collection is empty) */
+const SEED_PEOPLE = [
+  { name: "Sankalp Chopra", extra: "Co-Founder & Director" },
+  { name: "Manisha Chopra", extra: "Co-Founder" },
+  { name: "Rohit Chaudhary", extra: "SOPSO" },
+  { name: "Anurag Kumar", extra: "PMS" },
+  { name: "Jatin Gupta", extra: "Group CA" }
+];
+
+const isConfigured = !firebaseConfig.appId.startsWith("REPLACE_");
+
+let app, auth, db;
+if (isConfigured) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+}
+
+/* ===================== STATE ===================== */
+const state = {
+  user: null,
+  role: null,
+  assets: [],
+  people: [],
+  locations: [],
+  history: [],
+  pending: [],
+  filtered: [],
+  unsubAssets: null,
+  unsubPeople: null,
+  unsubLocations: null,
+  unsubHistory: null,
+  unsubPending: null,
+};
+
+/* ===================== HELPERS ===================== */
+const $ = (id) => document.getElementById(id);
+const fmtINR = (n) => n == null || n === '' ? '—' : '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+const fmtDate = (d) => !d ? '—' : new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+const fmtDateTime = (ts) => {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+};
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg, type = '') {
+  const wrap = $('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; }, 2400);
+  setTimeout(() => el.remove(), 2800);
+}
+
+/* ===================== ASSET ID AUTO-ALLOCATION =====================
+   Atomically allocates the next sequential ID per category using a
+   Firestore counter document, so two operators saving at the same time
+   never collide. IDs are never reused.
+   ===================================================================== */
+const CATEGORY_PREFIX = {
+  'IT/Electronics': 'IT',
+  'Office Furniture': 'OF',
+  'Spare Parts': 'SP',
+  'Manufacturing Equipment': 'ME',
+  'Stationery': 'ST',
+  'Other': 'GN'
+};
+
+async function allocateAssetCode(category) {
+  const prefix = CATEGORY_PREFIX[category] || 'GN';
+  const counterRef = doc(db, 'counters', 'asset_' + prefix);
+
+  // Atomic increment via Firestore transaction
+  const { runTransaction } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const next = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(counterRef);
+    let n = snap.exists() ? (snap.data().value || 0) : 0;
+    // Initialize counter from existing data if first time (so we don't clash with manually-coded items)
+    if (!snap.exists()) {
+      const existing = state.assets.filter(a => (a.code || '').startsWith(prefix + '-') || (a.code || '').startsWith('APH-' + prefix + '-'));
+      const maxN = existing.reduce((m, a) => {
+        const match = (a.code || '').match(/-(\d+)$/);
+        return match ? Math.max(m, parseInt(match[1], 10)) : m;
+      }, 0);
+      n = maxN;
+    }
+    n += 1;
+    tx.set(counterRef, { value: n, prefix, lastAllocatedAt: serverTimestamp() });
+    return n;
+  });
+
+  return `APH-${prefix}-${String(next).padStart(4, '0')}`;
+}
+
+/* Local fallback used only for placeholder display before save */
+function previewCode(category) {
+  const prefix = CATEGORY_PREFIX[category] || 'GN';
+  const sameCat = state.assets.filter(a => (a.code || '').includes('-' + prefix + '-') || (a.code || '').startsWith(prefix + '-'));
+  const next = sameCat.length + 1;
+  return `APH-${prefix}-${String(next).padStart(4, '0')} (preview)`;
+}
+
+/* ===================== CONFIG NOTICE ===================== */
+function renderConfigNotice() {
+  if (isConfigured) { $('configNotice').innerHTML = ''; return; }
+  $('configNotice').innerHTML = `
+    <div class="config-notice">
+      <strong>⚠ One-time setup needed:</strong> Register a new Web App inside the <code>aphl-pms-dashboard</code> Firebase project, then replace <code>appId</code> in this file with the new value.
+      Steps: <em>Firebase Console → aphl-pms-dashboard → Project Settings → Your apps → Add app (Web) → "Aelius AIM" → copy appId</em>.
+      Authentication and Firestore are already enabled in this project.
+    </div>`;
+}
+
+/* ===================== AUTH UI ===================== */
+let authMode = 'login';
+
+function setAuthMode(mode) {
+  authMode = mode;
+  $('authNameField').style.display = mode === 'register' ? 'block' : 'none';
+  $('authSubmit').textContent = mode === 'register' ? 'Create Account' : 'Sign In';
+  $('authSubtitle').textContent = mode === 'register' ? 'Create your account' : 'Sign in to continue';
+  $('authToggleText').textContent = mode === 'register' ? 'Already have an account?' : 'First time here?';
+  $('authToggle').textContent = mode === 'register' ? 'Sign in' : 'Create account';
+  hideAuthMsg();
+}
+function showAuthError(msg) { const el = $('authError'); el.textContent = msg; el.classList.add('show'); $('authInfo').classList.remove('show'); }
+function showAuthInfo(msg) { const el = $('authInfo'); el.textContent = msg; el.classList.add('show'); $('authError').classList.remove('show'); }
+function hideAuthMsg() { $('authError').classList.remove('show'); $('authInfo').classList.remove('show'); }
+
+$('authToggle').onclick = () => setAuthMode(authMode === 'login' ? 'register' : 'login');
+
+$('authSubmit').onclick = async () => {
+  if (!isConfigured) { showAuthError('Firebase not configured. Replace the config block in this file first.'); return; }
+  const email = $('authEmail').value.trim();
+  const password = $('authPassword').value;
+  if (!email || !password) { showAuthError('Email and password required.'); return; }
+  if (!isAllowed(email)) {
+    showAuthError('This email is not authorized to access Aelius AIM. Contact admin.');
+    return;
+  }
+  if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+  $('authSubmit').disabled = true;
+  $('authSubmit').innerHTML = '<span class="loader"></span>';
+  try {
+    if (authMode === 'register') {
+      const name = $('authName').value.trim();
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (name) await updateProfile(cred.user, { displayName: name });
+      toast('Account created', 'success');
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+  } catch (e) {
+    const map = {
+      'auth/invalid-credential': 'Invalid email or password.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/user-not-found': 'No account with this email.',
+      'auth/email-already-in-use': 'Email already registered. Try signing in.',
+      'auth/weak-password': 'Password too weak (min 6 chars).',
+      'auth/invalid-email': 'Invalid email address.',
+      'auth/network-request-failed': 'Network error. Check your connection.',
+    };
+    showAuthError(map[e.code] || e.message);
+  } finally {
+    $('authSubmit').disabled = false;
+    $('authSubmit').textContent = authMode === 'register' ? 'Create Account' : 'Sign In';
+  }
+};
+
+$('authForgot').onclick = async () => {
+  if (!isConfigured) { showAuthError('Firebase not configured.'); return; }
+  const email = $('authEmail').value.trim();
+  if (!email) { showAuthError('Enter your email above first.'); return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAuthInfo('Password reset email sent. Check your inbox.');
+  } catch (e) {
+    showAuthError(e.message);
+  }
+};
+
+$('logoutBtn').onclick = () => signOut(auth);
+
+/* ===================== AUTH STATE ===================== */
+if (isConfigured) {
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // Re-check whitelist on every session in case it changed
+      const role = getUserRole(user.email);
+      if (!role) {
+        await signOut(auth);
+        showAuthError('This email is not authorized to access Aelius AIM.');
+        return;
+      }
+      state.user = user;
+      state.role = role;
+      $('authScreen').style.display = 'none';
+      $('app').classList.add('active');
+      $('userEmail').textContent = ROLE_REGISTRY[user.email.toLowerCase()]?.display || user.displayName || user.email;
+      renderRoleBadge();
+      applyRoleGates();
+      bootData();
+      seedIfEmpty();
+      logSignIn();
+    } else {
+      state.user = null;
+      state.role = null;
+      $('authScreen').style.display = 'flex';
+      $('app').classList.remove('active');
+      teardownData();
+    }
+  });
+} else {
+  // Show app shell with config notice when not configured
+  renderConfigNotice();
+}
+
+function renderRoleBadge() {
+  const el = $('roleBadge');
+  if (!state.role) { el.style.display = 'none'; return; }
+  const meta = ROLE_LABELS[state.role];
+  el.className = 'role-badge ' + state.role;
+  el.textContent = meta.label;
+  el.title = meta.desc;
+  el.style.display = 'inline-block';
+}
+
+function applyRoleGates() {
+  // Approvals tab visible only to Management
+  $('tabApprovals').style.display = canApprove() ? '' : 'none';
+
+  // "+ New Asset" buttons hidden for audit role
+  const showAdd = canEdit();
+  $('newAssetBtn').style.display = showAdd ? '' : 'none';
+  $('newAssetBtnDash').style.display = showAdd ? '' : 'none';
+  $('addPersonBtn').style.display = showAdd ? '' : 'none';
+  $('addLocationBtn').style.display = showAdd ? '' : 'none';
+
+  // Import button: Management + Operator can see it. Operator imports go through approval.
+  $('importBtn').style.display = canEdit() ? '' : 'none';
+}
+
+async function logSignIn() {
+  try {
+    await addDoc(collection(db, 'history'), {
+      action: 'Sign in',
+      assetName: '—',
+      by: state.user.email,
+      byUid: state.user.uid,
+      role: state.role,
+      status: 'system',
+      at: serverTimestamp()
+    });
+  } catch (e) { /* non-critical */ }
+}
+
+/* ===================== SEED DEFAULT PEOPLE ON FIRST LOGIN ===================== */
+async function seedIfEmpty() {
+  try {
+    const snap = await getDocs(collection(db, 'people'));
+    if (snap.empty) {
+      for (const p of SEED_PEOPLE) {
+        await addDoc(collection(db, 'people'), { ...p, createdAt: serverTimestamp() });
+      }
+      toast('Default people seeded', 'success');
+    }
+  } catch (e) {
+    console.warn('Seeding skipped:', e.message);
+  }
+}
+
+/* ===================== TABS ===================== */
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    $('sec-' + t.dataset.tab).classList.add('active');
+  };
+});
+
+/* ===================== DATA SUBSCRIPTIONS ===================== */
+function bootData() {
+  renderConfigNotice();
+
+  state.unsubAssets = onSnapshot(query(collection(db, 'assets'), orderBy('createdAt', 'desc')),
+    (snap) => {
+      state.assets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderAll();
+    },
+    (err) => { console.error(err); toast('Error loading assets: ' + err.message, 'error'); }
+  );
+
+  state.unsubPeople = onSnapshot(query(collection(db, 'people'), orderBy('name')),
+    (snap) => {
+      state.people = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPeopleSelect();
+      renderPeopleList();
+    });
+
+  state.unsubLocations = onSnapshot(query(collection(db, 'locations'), orderBy('name')),
+    (snap) => {
+      state.locations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderLocationSelect();
+      renderLocationList();
+    });
+
+  state.unsubHistory = onSnapshot(query(collection(db, 'history'), orderBy('at', 'desc')),
+    (snap) => {
+      state.history = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderIssuanceLog();
+      renderRecentActivity();
+    });
+
+  state.unsubPending = onSnapshot(query(collection(db, 'pending'), orderBy('at', 'desc')),
+    (snap) => {
+      state.pending = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderApprovals();
+      renderRegistry(); // refresh to show pending chips
+      updatePendingBadge();
+    });
+}
+
+function teardownData() {
+  state.unsubAssets?.(); state.unsubPeople?.(); state.unsubLocations?.(); state.unsubHistory?.(); state.unsubPending?.();
+  state.assets = []; state.people = []; state.locations = []; state.history = []; state.pending = [];
+}
+
+/* ===================== AUDIT LOG ===================== */
+async function logAudit(entry) {
+  try {
+    await addDoc(collection(db, 'history'), {
+      ...entry,
+      by: state.user.email,
+      byName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display || state.user.email,
+      byUid: state.user.uid,
+      role: state.role,
+      at: serverTimestamp()
+    });
+  } catch (e) { console.warn('audit log failed', e); }
+}
+
+/* ===================== PENDING QUEUE ===================== */
+// Build a diff between two asset objects, returning only changed fields with from/to
+function buildDiff(before, after) {
+  if (!before) return null;
+  const fields = ['name','category','code','brand','model','serial','quantity','boughtDate','price','vendor','invoice','warranty','status','location','issuedTo','issuedToName','issuedDate','notes'];
+  const diff = {};
+  for (const f of fields) {
+    const a = before[f] ?? '';
+    const b = after[f] ?? '';
+    if (String(a) !== String(b)) diff[f] = { from: a, to: b };
+  }
+  return Object.keys(diff).length ? diff : null;
+}
+
+async function submitForApproval({ kind, assetId, before, after, summary }) {
+  await addDoc(collection(db, 'pending'), {
+    kind,                              // 'create' | 'update' | 'delete'
+    assetId: assetId || null,
+    assetName: after?.name || before?.name || '',
+    before: before || null,
+    after: after || null,
+    diff: buildDiff(before, after),
+    summary: summary || '',
+    status: 'pending',
+    proposedBy: state.user.email,
+    proposedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display || state.user.email,
+    proposedByUid: state.user.uid,
+    at: serverTimestamp()
+  });
+  await logAudit({
+    action: 'Proposed: ' + kind,
+    assetName: after?.name || before?.name || '',
+    assetId: assetId || null,
+    detail: summary,
+    status: 'pending'
+  });
+}
+
+function pendingFor(assetId) {
+  return state.pending.filter(p => p.assetId === assetId && p.status === 'pending');
+}
+function hasPendingFor(assetId) { return pendingFor(assetId).length > 0; }
+
+/* ===================== RENDER: STATS ===================== */
+function renderStats() {
+  const total = state.assets.length;
+  const inStore = state.assets.filter(a => a.status === 'In Store').length;
+  const issued = state.assets.filter(a => a.status === 'Issued').length;
+  const repair = state.assets.filter(a => a.status === 'In Repair').length;
+  const totalValue = state.assets.reduce((s, a) => s + (Number(a.price) || 0) * (Number(a.quantity) || 1), 0);
+
+  $('statsGrid').innerHTML = `
+    <div class="stat"><div class="label">Total Assets</div><div class="value">${total}</div><div class="sub">across all categories</div></div>
+    <div class="stat info"><div class="label">In Store</div><div class="value">${inStore}</div><div class="sub">available</div></div>
+    <div class="stat success"><div class="label">Issued</div><div class="value">${issued}</div><div class="sub">in use</div></div>
+    <div class="stat warning"><div class="label">In Repair</div><div class="value">${repair}</div><div class="sub">under maintenance</div></div>
+    <div class="stat"><div class="label">Total Book Value</div><div class="value" style="font-size:20px;">${fmtINR(totalValue)}</div><div class="sub">at cost</div></div>
+  `;
+  $('badgeCount').textContent = total;
+}
+
+/* ===================== RENDER: REGISTRY ===================== */
+function applyFilters() {
+  const q = $('searchInput').value.toLowerCase().trim();
+  const cat = $('filterCategory').value;
+  const status = $('filterStatus').value;
+  const loc = $('filterLocation').value;
+
+  state.filtered = state.assets.filter(a => {
+    if (cat && a.category !== cat) return false;
+    if (status && a.status !== status) return false;
+    if (loc && a.location !== loc) return false;
+    if (q) {
+      const hay = [a.name, a.code, a.brand, a.model, a.serial, a.issuedToName, a.notes].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderRegistry() {
+  applyFilters();
+  const tbody = $('assetTbody');
+  const cards = $('assetCards');
+  if (!state.filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="icon">∅</div>No assets found. Try adjusting filters or add a new asset.</div></td></tr>`;
+    cards.innerHTML = `<div class="empty"><div class="icon">∅</div>No assets found.</div>`;
+    return;
+  }
+
+  tbody.innerHTML = state.filtered.map(a => {
+    const pending = hasPendingFor(a.id);
+    return `
+    <tr data-id="${a.id}" class="${pending ? 'pending-row' : ''}">
+      <td class="code-cell">${escapeHtml(a.code || '—')} ${pending ? '<span class="chip pending" style="margin-left:4px;">⏳</span>' : ''}</td>
+      <td>
+        <div style="font-weight:500;">${escapeHtml(a.name)}</div>
+        ${a.brand || a.model ? `<div class="muted">${escapeHtml([a.brand, a.model].filter(Boolean).join(' · '))}</div>` : ''}
+      </td>
+      <td><span class="cat-${categoryClass(a.category)}">${escapeHtml(a.category || '—')}</span></td>
+      <td>${statusChip(a.status)}</td>
+      <td>${escapeHtml(a.issuedToName || '—')}</td>
+      <td>${escapeHtml(a.location || '—')}</td>
+      <td class="muted">${fmtDate(a.boughtDate)}</td>
+      <td>${fmtINR(a.price)}</td>
+      <td>${canEdit() ? `<button class="btn btn-sm" data-edit="${a.id}">Edit</button>` : `<button class="btn btn-sm" data-view="${a.id}">View</button>`}</td>
+    </tr>
+  `;}).join('');
+
+  cards.innerHTML = state.filtered.map(a => {
+    const pending = hasPendingFor(a.id);
+    return `
+    <div class="card" data-id="${a.id}" style="${pending ? 'border-left:3px solid var(--warning);' : ''}">
+      <div class="top">
+        <div>
+          <div class="name">${escapeHtml(a.name)}</div>
+          <div class="code">${escapeHtml(a.code || '—')} ${pending ? '<span class="chip pending">⏳ Pending</span>' : ''}</div>
+        </div>
+        ${statusChip(a.status)}
+      </div>
+      <div class="meta">
+        <span><strong>Cat:</strong> ${escapeHtml(a.category || '—')}</span>
+        ${a.issuedToName ? `<span><strong>To:</strong> ${escapeHtml(a.issuedToName)}</span>` : ''}
+        <span><strong>Loc:</strong> ${escapeHtml(a.location || '—')}</span>
+        <span><strong>${fmtINR(a.price)}</strong></span>
+      </div>
+    </div>
+  `;}).join('');
+
+  // Bind row clicks
+  tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+    tr.onclick = (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      const viewBtn = e.target.closest('[data-view]');
+      if (editBtn && canEdit()) {
+        openAssetModal(state.assets.find(a => a.id === tr.dataset.id));
+      } else {
+        openDetail(state.assets.find(a => a.id === tr.dataset.id));
+      }
+    };
+  });
+  cards.querySelectorAll('.card').forEach(c => {
+    c.onclick = () => openDetail(state.assets.find(a => a.id === c.dataset.id));
+  });
+}
+
+function statusChip(s) {
+  const cls = {
+    'In Store': 'in-store',
+    'Issued': 'issued',
+    'In Repair': 'repair',
+    'Returned': 'returned',
+    'Sold': 'sold',
+    'Disposed': 'disposed'
+  }[s] || '';
+  return `<span class="chip ${cls}">${escapeHtml(s || '—')}</span>`;
+}
+function categoryClass(c) {
+  return { 'IT/Electronics': 'it', 'Office Furniture': 'furniture', 'Spare Parts': 'spares' }[c] || 'other';
+}
+
+/* ===================== RENDER: AUDIT TRAIL ===================== */
+function renderIssuanceLog() {
+  const tbody = $('issuanceTbody');
+  if (!state.history.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No activity yet.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.history.slice(0, 300).map(h => {
+    const statusChipHtml = h.status === 'pending' ? `<span class="chip pending">Pending</span>`
+      : h.status === 'rejected' ? `<span class="chip rejected">Rejected</span>`
+      : h.status === 'approved' ? `<span class="chip approved">Approved</span>`
+      : h.status === 'system' ? `<span class="chip">System</span>`
+      : `<span class="muted">—</span>`;
+    return `
+      <tr>
+        <td class="muted" style="font-family:var(--font-mono); font-size:11px; white-space:nowrap;">${fmtDateTime(h.at)}</td>
+        <td>${escapeHtml(h.assetName || '—')}</td>
+        <td>${escapeHtml(h.action || '—')}</td>
+        <td class="muted" style="font-size:12px;">${escapeHtml(h.detail || '')}</td>
+        <td class="muted">${escapeHtml(h.proposedByName || h.byName || h.by || '—')}</td>
+        <td>${statusChipHtml}</td>
+        <td class="muted">${escapeHtml(h.approvedByName || '—')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderRecentActivity() {
+  const recent = state.history.slice(0, 6);
+  if (!recent.length) {
+    $('recentActivity').innerHTML = `<div class="empty">No recent activity. Start by adding your first asset.</div>`;
+    return;
+  }
+  $('recentActivity').innerHTML = recent.map(h => `
+    <div class="history-item">
+      <div class="when">${fmtDateTime(h.at)} · ${escapeHtml(h.byName || h.by || 'system')} ${h.status === 'pending' ? '· <span style="color:var(--warning)">Pending</span>' : h.status === 'rejected' ? '· <span style="color:var(--danger)">Rejected</span>' : ''}</div>
+      <div class="what"><strong>${escapeHtml(h.action)}</strong> — ${escapeHtml(h.assetName || '')}${h.detail ? ' · ' + escapeHtml(h.detail) : ''}</div>
+    </div>
+  `).join('');
+}
+
+/* ===================== RENDER: PEOPLE & LOCATIONS ===================== */
+function renderPeopleSelect() {
+  const sel = $('f_issuedTo');
+  const current = sel.value;
+  const activeOnly = state.people.filter(p => (p.status || 'Active') === 'Active');
+  sel.innerHTML = '<option value="">— Not issued —</option>' +
+    activeOnly.map(p => {
+      const tag = [p.empCode, p.name, p.extra].filter(Boolean).join(' · ');
+      return `<option value="${p.id}">${escapeHtml(tag)}</option>`;
+    }).join('');
+  // If currently selected person is inactive, keep them in the dropdown but tag it
+  if (current && !activeOnly.find(p => p.id === current)) {
+    const inactivePerson = state.people.find(p => p.id === current);
+    if (inactivePerson) {
+      const opt = document.createElement('option');
+      opt.value = inactivePerson.id;
+      opt.textContent = `${inactivePerson.name} (Inactive)`;
+      sel.appendChild(opt);
+    }
+  }
+  if (current) sel.value = current;
+}
+function renderLocationSelect() {
+  const sel = $('f_location');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select —</option>' +
+    state.locations.map(l => `<option value="${escapeHtml(l.name)}">${escapeHtml(l.name)}</option>`).join('');
+  if (current) sel.value = current;
+
+  const filt = $('filterLocation');
+  const fcur = filt.value;
+  filt.innerHTML = '<option value="">All Locations</option>' +
+    state.locations.map(l => `<option value="${escapeHtml(l.name)}">${escapeHtml(l.name)}</option>`).join('');
+  if (fcur) filt.value = fcur;
+}
+function renderPeopleList() {
+  const list = $('peopleList');
+  if (!state.people.length) { list.innerHTML = `<div class="empty" style="padding:20px;">No employees added yet.</div>`; return; }
+
+  // Sort: Active first, then Inactive
+  const sorted = [...state.people].sort((a, b) => {
+    const aActive = (a.status || 'Active') === 'Active' ? 0 : 1;
+    const bActive = (b.status || 'Active') === 'Active' ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  list.innerHTML = sorted.map(p => {
+    const isInactive = (p.status || 'Active') === 'Inactive';
+    const lines = [
+      p.empCode ? `<span style="color:var(--accent); font-family:var(--font-mono); font-size:11px;">${escapeHtml(p.empCode)}</span>` : '',
+      p.extra ? escapeHtml(p.extra) : '',
+      p.email ? `<span style="color:var(--info);">${escapeHtml(p.email)}</span>` : '',
+      p.joinDate ? `Joined ${fmtDate(p.joinDate)}` : '',
+      isInactive && p.exitedAt ? `<span style="color:var(--danger);">Exited ${fmtDate(p.exitedAt)}</span>` : ''
+    ].filter(Boolean).join(' · ');
+    return `
+    <div class="history-item" style="border-left-color:${isInactive ? 'var(--danger)' : 'var(--info)'}; display:flex; align-items:center; gap:8px; ${isInactive ? 'opacity:0.6;' : ''}">
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:500; ${isInactive ? 'text-decoration:line-through; color:var(--text-dim);' : ''}">${escapeHtml(p.name)}${isInactive ? ' <span class="chip" style="background:rgba(232,123,107,0.12); color:var(--danger); border-color:rgba(232,123,107,0.3); margin-left:4px;">Inactive</span>' : ''}</div>
+        ${lines ? `<div class="when" style="margin-top:3px;">${lines}</div>` : ''}
+      </div>
+      <button class="btn btn-sm" data-edit-person="${p.id}">Edit</button>
+    </div>
+  `;}).join('');
+  list.querySelectorAll('[data-edit-person]').forEach(b => {
+    b.onclick = () => openEntityModal('person', state.people.find(p => p.id === b.dataset.editPerson));
+  });
+}
+function renderLocationList() {
+  const list = $('locationList');
+  if (!state.locations.length) { list.innerHTML = `<div class="empty" style="padding:20px;">No locations added yet.</div>`; return; }
+  list.innerHTML = state.locations.map(l => `
+    <div class="history-item" style="border-left-color:var(--accent); display:flex; align-items:center; gap:8px;">
+      <div style="flex:1;">
+        <div style="font-weight:500;">${escapeHtml(l.name)}</div>
+        ${l.extra ? `<div class="when">${escapeHtml(l.extra)}</div>` : ''}
+      </div>
+      <button class="btn btn-sm" data-edit-loc="${l.id}">Edit</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-edit-loc]').forEach(b => {
+    b.onclick = () => openEntityModal('location', state.locations.find(l => l.id === b.dataset.editLoc));
+  });
+}
+
+function renderAll() {
+  renderStats();
+  renderRegistry();
+}
+
+/* ===================== APPROVALS UI ===================== */
+function updatePendingBadge() {
+  const count = state.pending.filter(p => p.status === 'pending').length;
+  const b = $('badgePending');
+  b.textContent = count;
+  b.style.display = count > 0 ? '' : 'none';
+}
+
+function renderApprovals() {
+  if (!canApprove()) { $('approvalsList').innerHTML = ''; return; }
+  const items = state.pending.filter(p => p.status === 'pending');
+  $('approvalCount').textContent = items.length ? `${items.length} pending` : '';
+
+  if (!items.length) {
+    $('approvalsList').innerHTML = `<div class="empty"><div class="icon">✓</div>No pending approvals. All actions are up to date.</div>`;
+    return;
+  }
+
+  $('approvalsList').innerHTML = items.map(p => {
+    const kindMap = { create: 'New Asset', update: 'Asset Update', delete: 'Asset Deletion' };
+    return `
+      <div class="approval-card" data-pid="${p.id}">
+        <div class="head">
+          <span class="action-tag">⏳ ${kindMap[p.kind] || p.kind}</span>
+          <span class="asset-name">${escapeHtml(p.assetName || '—')}</span>
+          <span class="by-line">${escapeHtml(p.proposedByName || '')} · ${fmtDateTime(p.at)}</span>
+        </div>
+        ${renderApprovalContent(p)}
+        <div class="controls">
+          <button class="btn btn-approve btn-sm" data-approve="${p.id}">✓ Approve</button>
+          <button class="btn btn-reject btn-sm" data-reject="${p.id}">✕ Reject</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  $('approvalsList').querySelectorAll('[data-approve]').forEach(b => {
+    b.onclick = () => approveChange(b.dataset.approve);
+  });
+  $('approvalsList').querySelectorAll('[data-reject]').forEach(b => {
+    b.onclick = () => rejectChange(b.dataset.reject);
+  });
+}
+
+function renderApprovalContent(p) {
+  if (p.kind === 'import') {
+    const r = p.importPayload || {};
+    return `<div class="changes">
+      <div class="field-row" style="grid-template-columns: 1fr;">
+        <div style="font-weight:500;">Bulk Import: ${p.summary}</div>
+      </div>
+      ${(r.employees || []).length ? `<div class="field-row" style="grid-template-columns: 110px 1fr;"><div class="k">Employees</div><div class="to">${r.employees.length} new entries</div></div>` : ''}
+      ${(r.locations || []).length ? `<div class="field-row" style="grid-template-columns: 110px 1fr;"><div class="k">Locations</div><div class="to">${r.locations.length} new entries</div></div>` : ''}
+      ${(r.assets || []).length ? `<div class="field-row" style="grid-template-columns: 110px 1fr;"><div class="k">Assets</div><div class="to">${r.assets.length} new entries</div></div>` : ''}
+      ${r.errors && r.errors.length ? `<div class="field-row" style="grid-template-columns: 110px 1fr;"><div class="k" style="color:var(--danger);">Errors</div><div style="color:var(--danger);">${r.errors.length} rows skipped</div></div>` : ''}
+    </div>`;
+  }
+  if (p.kind === 'create') {
+    const a = p.after || {};
+    return `<div class="changes">
+      <div class="field-row"><div class="k">Item</div><div class="to">${escapeHtml(a.name)}</div><div class="muted">${escapeHtml(a.category)}</div></div>
+      <div class="field-row"><div class="k">Code</div><div class="to">${escapeHtml(a.code)}</div><div class="muted">${fmtINR(a.price)}</div></div>
+      <div class="field-row"><div class="k">Location</div><div class="to">${escapeHtml(a.location)}</div><div class="muted">${a.issuedToName ? 'Issued to ' + escapeHtml(a.issuedToName) : 'In Store'}</div></div>
+      ${a.notes ? `<div class="field-row"><div class="k">Notes</div><div class="to" style="grid-column: 2 / -1;">${escapeHtml(a.notes)}</div></div>` : ''}
+    </div>`;
+  }
+  if (p.kind === 'delete') {
+    const a = p.before || {};
+    return `<div class="changes">
+      <div class="field-row" style="grid-template-columns: 1fr;">
+        <div style="color:var(--danger); font-weight:500;">⚠ Will permanently delete: ${escapeHtml(a.code)} — ${escapeHtml(a.name)} (${fmtINR(a.price)})</div>
+      </div>
+    </div>`;
+  }
+  // update
+  const diff = p.diff || {};
+  const keys = Object.keys(diff);
+  if (!keys.length) return `<div class="changes"><div class="muted">No field changes.</div></div>`;
+  return `<div class="changes">
+    ${keys.map(k => `
+      <div class="field-row">
+        <div class="k">${escapeHtml(k)}</div>
+        <div class="from">${escapeHtml(diff[k].from || '∅')}</div>
+        <div class="to"><span class="arrow">→</span> ${escapeHtml(diff[k].to || '∅')}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+async function approveChange(pid) {
+  const p = state.pending.find(x => x.id === pid);
+  if (!p) return;
+  if (!confirm(`Approve this ${p.kind}?`)) return;
+
+  try {
+    if (p.kind === 'create') {
+      const ref = await addDoc(collection(db, 'assets'), {
+        ...p.after,
+        createdAt: serverTimestamp(),
+        createdBy: p.proposedBy,
+        updatedAt: serverTimestamp(),
+        lastApprovedBy: state.user.email,
+        lastApprovedAt: serverTimestamp()
+      });
+      await logAudit({
+        action: 'Created',
+        assetId: ref.id,
+        assetName: p.after.name,
+        detail: `Proposed by ${p.proposedByName}, approved`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+        proposedBy: p.proposedBy,
+        proposedByName: p.proposedByName
+      });
+    } else if (p.kind === 'update') {
+      await updateDoc(doc(db, 'assets', p.assetId), {
+        ...p.after,
+        updatedAt: serverTimestamp(),
+        lastApprovedBy: state.user.email,
+        lastApprovedAt: serverTimestamp()
+      });
+      await logAudit({
+        action: 'Updated',
+        assetId: p.assetId,
+        assetName: p.after.name,
+        detail: p.summary || summariseDiff(p.diff),
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+        proposedBy: p.proposedBy,
+        proposedByName: p.proposedByName
+      });
+    } else if (p.kind === 'delete') {
+      await deleteDoc(doc(db, 'assets', p.assetId));
+      await logAudit({
+        action: 'Deleted',
+        assetId: p.assetId,
+        assetName: p.before?.name,
+        detail: `Code ${p.before?.code} · approved deletion`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+        proposedBy: p.proposedBy,
+        proposedByName: p.proposedByName
+      });
+    } else if (p.kind === 'import') {
+      // Replay the entire import using the stored payload
+      await commitImport(p.importPayload);
+      await logAudit({
+        action: 'Bulk Import (approved)',
+        assetName: '—',
+        detail: `Approved import: ${p.summary} · proposed by ${p.proposedByName}`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+        proposedBy: p.proposedBy,
+        proposedByName: p.proposedByName
+      });
+    }
+    // Mark pending as approved (do not delete — keep for audit)
+    await updateDoc(doc(db, 'pending', pid), {
+      status: 'approved',
+      approvedBy: state.user.email,
+      approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+      approvedAt: serverTimestamp()
+    });
+    toast('Approved', 'success');
+  } catch (e) {
+    console.error(e);
+    toast('Approval failed: ' + e.message, 'error');
+  }
+}
+
+async function rejectChange(pid) {
+  const p = state.pending.find(x => x.id === pid);
+  if (!p) return;
+  const reason = prompt('Reason for rejection (visible to operator):', '');
+  if (reason === null) return; // cancelled
+  try {
+    await updateDoc(doc(db, 'pending', pid), {
+      status: 'rejected',
+      approvedBy: state.user.email,
+      approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+      approvedAt: serverTimestamp(),
+      rejectionReason: reason || '(no reason given)'
+    });
+    await logAudit({
+      action: 'Rejected: ' + p.kind,
+      assetId: p.assetId,
+      assetName: p.assetName,
+      detail: `Reason: ${reason || '(none)'} · proposed by ${p.proposedByName}`,
+      status: 'rejected',
+      approvedBy: state.user.email,
+      approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+      proposedBy: p.proposedBy,
+      proposedByName: p.proposedByName
+    });
+    toast('Rejected', 'success');
+  } catch (e) {
+    toast('Failed: ' + e.message, 'error');
+  }
+}
+
+/* ===================== ASSET MODAL ===================== */
+function openAssetModal(asset = null) {
+  if (!canEdit()) { toast('Read-only role — cannot edit', 'error'); return; }
+
+  $('assetModal').classList.add('show');
+  $('assetModalTitle').textContent = asset ? 'Edit Asset' : 'New Asset';
+  $('deleteAssetBtn').style.display = asset ? 'inline-flex' : 'none';
+  $('historySection').style.display = asset ? 'block' : 'none';
+
+  // Banner explaining what happens on save
+  const banner = $('modalBanner');
+  if (canApprove()) {
+    banner.innerHTML = `<div class="action-banner" style="background:rgba(107,199,149,0.08); border-color:rgba(107,199,149,0.3); color:var(--success);">
+      <span class="ico">✓</span> Your changes will be saved immediately (auto-approved).
+    </div>`;
+  } else {
+    banner.innerHTML = `<div class="action-banner">
+      <span class="ico">⏳</span> Your changes will be submitted to Management for approval before being committed.
+    </div>`;
+  }
+
+  if (asset && hasPendingFor(asset.id)) {
+    banner.innerHTML += `<div class="action-banner" style="background:rgba(232,123,107,0.08); border-color:rgba(232,123,107,0.3); color:var(--danger);">
+      <span class="ico">⚠</span> This asset already has a pending change. New edits are blocked until that's resolved.
+    </div>`;
+  }
+
+  if (asset) {
+    $('assetId').value = asset.id;
+    $('f_name').value = asset.name || '';
+    $('f_category').value = asset.category || 'IT/Electronics';
+    $('f_code').value = asset.code || '';
+    $('f_brand').value = asset.brand || '';
+    $('f_model').value = asset.model || '';
+    $('f_serial').value = asset.serial || '';
+    $('f_quantity').value = asset.quantity || 1;
+    $('f_boughtDate').value = asset.boughtDate || '';
+    $('f_price').value = asset.price || '';
+    $('f_vendor').value = asset.vendor || '';
+    $('f_invoice').value = asset.invoice || '';
+    $('f_warranty').value = asset.warranty || '';
+    $('f_status').value = asset.status || 'In Store';
+    $('f_location').value = asset.location || '';
+    $('f_issuedTo').value = asset.issuedTo || '';
+    $('f_issuedDate').value = asset.issuedDate || '';
+    $('f_notes').value = asset.notes || '';
+    renderAssetHistory(asset.id);
+  } else {
+    ['assetId','f_name','f_brand','f_model','f_serial','f_vendor','f_invoice','f_warranty','f_issuedDate','f_notes','f_price'].forEach(id => $(id).value = '');
+    $('f_category').value = 'IT/Electronics';
+    $('f_quantity').value = 1;
+    $('f_boughtDate').value = new Date().toISOString().slice(0,10);
+    $('f_status').value = 'In Store';
+    $('f_location').value = '';
+    $('f_issuedTo').value = '';
+    $('f_code').value = previewCode($('f_category').value);
+  }
+}
+
+// Update code preview when category changes (only for new assets)
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'f_category' && !$('assetId').value) {
+    $('f_code').value = previewCode(e.target.value);
+  }
+});
+
+function renderAssetHistory(assetId) {
+  const items = state.history.filter(h => h.assetId === assetId);
+  $('historyList').innerHTML = items.length
+    ? items.map(h => `<div class="history-item"><div class="when">${fmtDateTime(h.at)} · ${escapeHtml(h.by || '')}</div><div class="what">${escapeHtml(h.action)}${h.toFrom ? ' → ' + escapeHtml(h.toFrom) : ''}${h.notes ? ' · ' + escapeHtml(h.notes) : ''}</div></div>`).join('')
+    : '<div class="muted" style="font-size:12px;">No history yet.</div>';
+}
+
+$('saveAssetBtn').onclick = async () => {
+  if (!canEdit()) { toast('Read-only role — cannot save', 'error'); return; }
+
+  const id = $('assetId').value;
+  const name = $('f_name').value.trim();
+  const category = $('f_category').value;
+  const status = $('f_status').value;
+  const location = $('f_location').value;
+  const boughtDate = $('f_boughtDate').value;
+  const price = $('f_price').value;
+
+  if (!name) { toast('Item name required', 'error'); return; }
+  if (!boughtDate) { toast('Bought date required', 'error'); return; }
+  if (!location) { toast('Location required — add a location first if none exist', 'error'); return; }
+
+  // Block edits if there's already a pending change for this asset
+  if (id && hasPendingFor(id)) {
+    toast('This asset already has a pending change. Wait for approval first.', 'error');
+    return;
+  }
+
+  const issuedToId = $('f_issuedTo').value;
+  const issuedToPerson = issuedToId ? state.people.find(p => p.id === issuedToId) : null;
+
+  // Allocate code: existing assets keep their code; new ones get atomic allocation
+  let assetCode;
+  if (id) {
+    const existing = state.assets.find(a => a.id === id);
+    assetCode = existing?.code || '';
+  } else {
+    try {
+      assetCode = await allocateAssetCode(category);
+    } catch (e) {
+      toast('Code allocation failed: ' + e.message, 'error');
+      return;
+    }
+  }
+
+  const data = {
+    name,
+    category,
+    code: assetCode,
+    brand: $('f_brand').value.trim(),
+    model: $('f_model').value.trim(),
+    serial: $('f_serial').value.trim(),
+    quantity: Number($('f_quantity').value) || 1,
+    boughtDate,
+    price: Number(price) || 0,
+    vendor: $('f_vendor').value.trim(),
+    invoice: $('f_invoice').value.trim(),
+    warranty: $('f_warranty').value || null,
+    status,
+    location,
+    issuedTo: issuedToId || null,
+    issuedToName: issuedToPerson ? issuedToPerson.name : null,
+    issuedDate: $('f_issuedDate').value || null,
+    notes: $('f_notes').value.trim()
+  };
+
+  $('saveAssetBtn').disabled = true;
+  try {
+    if (canApprove()) {
+      // Management: direct commit (auto-approved)
+      if (id) {
+        const before = state.assets.find(a => a.id === id);
+        await updateDoc(doc(db, 'assets', id), {
+          ...data,
+          updatedAt: serverTimestamp(),
+          lastApprovedBy: state.user.email,
+          lastApprovedAt: serverTimestamp()
+        });
+        await logAudit({
+          action: 'Updated (auto-approved)',
+          assetId: id,
+          assetName: name,
+          detail: summariseDiff(buildDiff(before, data)),
+          status: 'approved',
+          approvedBy: state.user.email,
+          approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+        });
+        toast('Asset updated', 'success');
+      } else {
+        const ref = await addDoc(collection(db, 'assets'), {
+          ...data,
+          createdAt: serverTimestamp(),
+          createdBy: state.user.email,
+          updatedAt: serverTimestamp(),
+          lastApprovedBy: state.user.email,
+          lastApprovedAt: serverTimestamp()
+        });
+        await logAudit({
+          action: 'Created (auto-approved)',
+          assetId: ref.id,
+          assetName: name,
+          detail: `${category} · ${location}${data.issuedToName ? ' · issued to ' + data.issuedToName : ''}`,
+          status: 'approved',
+          approvedBy: state.user.email,
+          approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+        });
+        toast('Asset added', 'success');
+      }
+    } else {
+      // Operator: route through approval queue
+      if (id) {
+        const before = state.assets.find(a => a.id === id);
+        await submitForApproval({
+          kind: 'update',
+          assetId: id,
+          before,
+          after: data,
+          summary: summariseDiff(buildDiff(before, data))
+        });
+        toast('Submitted for approval', 'success');
+      } else {
+        await submitForApproval({
+          kind: 'create',
+          assetId: null,
+          before: null,
+          after: data,
+          summary: `New ${category} · ${location}${data.issuedToName ? ' · for ' + data.issuedToName : ''}`
+        });
+        toast('Submitted for approval', 'success');
+      }
+    }
+    closeModals();
+  } catch (e) {
+    console.error(e);
+    toast('Save failed: ' + e.message, 'error');
+  } finally {
+    $('saveAssetBtn').disabled = false;
+  }
+};
+
+function summariseDiff(diff) {
+  if (!diff) return '';
+  const keys = Object.keys(diff);
+  if (!keys.length) return '';
+  return keys.map(k => `${k}: "${diff[k].from || '∅'}" → "${diff[k].to || '∅'}"`).slice(0, 3).join('; ') + (keys.length > 3 ? ` (+${keys.length - 3} more)` : '');
+}
+
+$('deleteAssetBtn').onclick = async () => {
+  if (!canEdit()) { toast('Read-only role — cannot delete', 'error'); return; }
+  const id = $('assetId').value;
+  if (!id) return;
+  const a = state.assets.find(x => x.id === id);
+  if (hasPendingFor(id)) { toast('Pending change exists for this asset.', 'error'); return; }
+
+  if (canApprove()) {
+    if (!confirm(`Delete "${a?.name}"? This cannot be undone.`)) return;
+    try {
+      await deleteDoc(doc(db, 'assets', id));
+      await logAudit({
+        action: 'Deleted (auto-approved)',
+        assetId: id,
+        assetName: a?.name,
+        detail: `Code ${a?.code}`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+      });
+      toast('Asset deleted', 'success');
+      closeModals();
+    } catch (e) { toast('Delete failed: ' + e.message, 'error'); }
+  } else {
+    if (!confirm(`Submit deletion of "${a?.name}" for management approval?`)) return;
+    try {
+      await submitForApproval({
+        kind: 'delete',
+        assetId: id,
+        before: a,
+        after: null,
+        summary: `Delete request for ${a?.code} · ${a?.name}`
+      });
+      toast('Deletion submitted for approval', 'success');
+      closeModals();
+    } catch (e) { toast('Failed: ' + e.message, 'error'); }
+  }
+};
+
+/* ===================== DETAIL MODAL ===================== */
+function openDetail(asset) {
+  if (!asset) return;
+  $('detailModal').classList.add('show');
+  $('detailTitle').textContent = asset.name;
+  const rows = [
+    ['Code', asset.code, true],
+    ['Category', asset.category],
+    ['Status', null, false, statusChip(asset.status)],
+    ['Brand / Model', [asset.brand, asset.model].filter(Boolean).join(' · ') || '—'],
+    ['Serial', asset.serial],
+    ['Quantity', asset.quantity || 1],
+    ['Bought On', fmtDate(asset.boughtDate)],
+    ['Price', fmtINR(asset.price)],
+    ['Vendor', asset.vendor],
+    ['Invoice / PO', asset.invoice],
+    ['Warranty Until', fmtDate(asset.warranty)],
+    ['Location', asset.location],
+    ['Issued To', asset.issuedToName],
+    ['Issued On', fmtDate(asset.issuedDate)],
+    ['Notes', asset.notes],
+  ];
+  const histItems = state.history.filter(h => h.assetId === asset.id);
+  $('detailBody').innerHTML = rows.map(([k,v,code,html]) => `
+    <div class="detail-row">
+      <div class="k">${escapeHtml(k)}</div>
+      <div class="v ${code?'code':''}">${html || escapeHtml(v || '—')}</div>
+    </div>
+  `).join('') + (histItems.length ? `
+    <h4 style="font-family:var(--font-display); font-size:14px; margin:18px 0 10px; color:var(--text-dim);">History</h4>
+    ${histItems.map(h => `<div class="history-item"><div class="when">${fmtDateTime(h.at)} · ${escapeHtml(h.by || '')}</div><div class="what">${escapeHtml(h.action)}${h.toFrom ? ' → ' + escapeHtml(h.toFrom) : ''}</div></div>`).join('')}
+  ` : '');
+
+  $('editFromDetail').style.display = canEdit() ? '' : 'none';
+  $('editFromDetail').onclick = () => { closeModals(); openAssetModal(asset); };
+
+  // Quick actions: Returned button visible when asset is currently Issued
+  const showReturned = canEdit() && asset.status === 'Issued';
+  // Sold button visible for any non-disposed asset
+  const showSold = canEdit() && asset.status !== 'Sold' && asset.status !== 'Disposed';
+
+  $('markReturnedBtn').style.display = showReturned ? '' : 'none';
+  $('markSoldBtn').style.display = showSold ? '' : 'none';
+
+  $('markReturnedBtn').onclick = () => quickMarkReturned(asset);
+  $('markSoldBtn').onclick = () => openSoldModal(asset);
+}
+
+/* ===================== QUICK ACTIONS: RETURNED / SOLD ===================== */
+async function quickMarkReturned(asset) {
+  if (!canEdit()) return;
+  if (hasPendingFor(asset.id)) { toast('Pending change exists. Wait for approval first.', 'error'); return; }
+  if (!confirm(`Mark "${asset.name}" as Returned from ${asset.issuedToName || 'employee'}? It will go back to In Store status.`)) return;
+
+  const updated = {
+    ...asset,
+    status: 'In Store',
+    issuedTo: null,
+    issuedToName: null,
+    issuedDate: null,
+    returnedFrom: asset.issuedToName,
+    returnedAt: new Date().toISOString().slice(0, 10),
+    notes: asset.notes
+  };
+  // Strip non-storable fields
+  delete updated.id; delete updated.createdAt; delete updated.updatedAt; delete updated.lastApprovedBy; delete updated.lastApprovedAt; delete updated.createdBy; delete updated.importedAt;
+
+  try {
+    if (canApprove()) {
+      await updateDoc(doc(db, 'assets', asset.id), {
+        status: 'In Store',
+        issuedTo: null,
+        issuedToName: null,
+        issuedDate: null,
+        returnedFrom: asset.issuedToName,
+        returnedAt: new Date().toISOString().slice(0, 10),
+        updatedAt: serverTimestamp(),
+        lastApprovedBy: state.user.email,
+        lastApprovedAt: serverTimestamp()
+      });
+      await logAudit({
+        action: 'Returned (auto-approved)',
+        assetId: asset.id,
+        assetName: asset.name,
+        detail: `Returned from ${asset.issuedToName} → In Store`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+      });
+      toast('Marked Returned', 'success');
+    } else {
+      await submitForApproval({
+        kind: 'update',
+        assetId: asset.id,
+        before: asset,
+        after: updated,
+        summary: `Return from ${asset.issuedToName || 'employee'}`
+      });
+      toast('Return submitted for approval', 'success');
+    }
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+function openSoldModal(asset) {
+  if (!canEdit()) return;
+  if (hasPendingFor(asset.id)) { toast('Pending change exists. Wait for approval first.', 'error'); return; }
+  closeModals();
+  $('soldModal').classList.add('show');
+  $('soldAssetId').value = asset.id;
+  $('soldDate').value = new Date().toISOString().slice(0, 10);
+  $('soldPrice').value = '';
+  $('soldBuyer').value = '';
+  $('soldNotes').value = '';
+}
+
+$('soldConfirmBtn').onclick = async () => {
+  const id = $('soldAssetId').value;
+  const asset = state.assets.find(a => a.id === id);
+  if (!asset) return;
+  const date = $('soldDate').value;
+  const price = Number($('soldPrice').value);
+  const buyer = $('soldBuyer').value.trim();
+  const notes = $('soldNotes').value.trim();
+  if (!date) { toast('Sale date required', 'error'); return; }
+  if (!price || price < 0) { toast('Valid sale price required', 'error'); return; }
+
+  const updated = {
+    ...asset,
+    status: 'Sold',
+    soldDate: date,
+    soldPrice: price,
+    soldBuyer: buyer,
+    soldNotes: notes,
+    issuedTo: null,
+    issuedToName: null
+  };
+  delete updated.id; delete updated.createdAt; delete updated.updatedAt; delete updated.lastApprovedBy; delete updated.lastApprovedAt; delete updated.createdBy; delete updated.importedAt;
+
+  try {
+    if (canApprove()) {
+      await updateDoc(doc(db, 'assets', id), {
+        status: 'Sold',
+        soldDate: date,
+        soldPrice: price,
+        soldBuyer: buyer,
+        soldNotes: notes,
+        issuedTo: null,
+        issuedToName: null,
+        updatedAt: serverTimestamp(),
+        lastApprovedBy: state.user.email,
+        lastApprovedAt: serverTimestamp()
+      });
+      await logAudit({
+        action: 'Sold (auto-approved)',
+        assetId: id,
+        assetName: asset.name,
+        detail: `Sold to ${buyer || '—'} for ${fmtINR(price)} on ${date}`,
+        status: 'approved',
+        approvedBy: state.user.email,
+        approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+      });
+      toast('Marked Sold', 'success');
+    } else {
+      await submitForApproval({
+        kind: 'update',
+        assetId: id,
+        before: asset,
+        after: updated,
+        summary: `Sale: ${fmtINR(price)} to ${buyer || '—'} on ${date}`
+      });
+      toast('Sale submitted for approval', 'success');
+    }
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+};
+
+/* ===================== ENTITY (PERSON / LOCATION) MODAL ===================== */
+let entityCurrentType = 'person';
+function openEntityModal(type, entity = null) {
+  entityCurrentType = type;
+  $('entityModal').classList.add('show');
+  $('entityType').value = type;
+  $('entityId').value = entity ? entity.id : '';
+  $('entityTitle').textContent = (entity ? 'Edit ' : 'Add ') + (type === 'person' ? 'Employee' : 'Location');
+  $('entityDeleteBtn').style.display = entity ? 'inline-flex' : 'none';
+
+  if (type === 'person') {
+    $('personFields').style.display = '';
+    $('locationFields').style.display = 'none';
+    $('entityName').value     = entity ? (entity.name || '') : '';
+    $('entityEmpCode').value  = entity ? (entity.empCode || '') : '';
+    $('entityJoinDate').value = entity ? (entity.joinDate || '') : '';
+    $('entityEmail').value    = entity ? (entity.email || '') : '';
+    $('entityExtra').value    = entity ? (entity.extra || '') : '';
+
+    // Status block visible only for existing employees
+    if (entity) {
+      $('employeeStatusBlock').style.display = '';
+      const status = entity.status || 'Active';
+      const isActive = status === 'Active';
+      const display = $('employeeStatusDisplay');
+      display.textContent = status;
+      display.style.background = isActive ? 'rgba(107,199,149,0.15)' : 'rgba(232,123,107,0.15)';
+      display.style.color = isActive ? 'var(--success)' : 'var(--danger)';
+
+      $('deactivateEmployeeBtn').style.display = isActive ? '' : 'none';
+      $('reactivateEmployeeBtn').style.display = isActive ? 'none' : '';
+
+      // Show count of currently-issued assets
+      const issuedAssets = state.assets.filter(a => a.issuedTo === entity.id && (a.status === 'Issued'));
+      if (isActive && issuedAssets.length) {
+        $('employeeStatusHint').innerHTML = `⚠ Currently has <strong>${issuedAssets.length} asset${issuedAssets.length > 1 ? 's' : ''}</strong> issued. Must be returned before deactivating.`;
+        $('employeeStatusHint').style.color = 'var(--warning)';
+      } else if (!isActive && entity.exitedAt) {
+        $('employeeStatusHint').textContent = `Deactivated on ${fmtDate(entity.exitedAt)}`;
+        $('employeeStatusHint').style.color = 'var(--text-faint)';
+      } else {
+        $('employeeStatusHint').textContent = '';
+      }
+
+      $('deactivateEmployeeBtn').onclick = () => deactivateEmployee(entity);
+      $('reactivateEmployeeBtn').onclick = () => reactivateEmployee(entity);
+    } else {
+      $('employeeStatusBlock').style.display = 'none';
+    }
+  } else {
+    $('personFields').style.display = 'none';
+    $('locationFields').style.display = '';
+    $('entityNameLoc').value  = entity ? (entity.name || '') : '';
+    $('entityExtraLoc').value = entity ? (entity.extra || '') : '';
+  }
+}
+
+async function deactivateEmployee(entity) {
+  if (!canEdit()) return;
+  const issued = state.assets.filter(a => a.issuedTo === entity.id && a.status === 'Issued');
+  if (issued.length) {
+    const list = issued.map(a => `• ${a.code} — ${a.name}`).join('\n');
+    alert(`Cannot deactivate ${entity.name} — ${issued.length} asset(s) still issued:\n\n${list}\n\nReturn each asset first using the "Mark Returned" button.`);
+    return;
+  }
+  if (!confirm(`Deactivate ${entity.name}?\n\nThey will be removed from the issued-to dropdown. Audit trail and historical issuance records remain intact. You can reactivate later.`)) return;
+
+  try {
+    await updateDoc(doc(db, 'people', entity.id), {
+      status: 'Inactive',
+      exitedAt: new Date().toISOString().slice(0, 10),
+      updatedAt: serverTimestamp()
+    });
+    await logAudit({
+      action: 'Employee deactivated',
+      assetName: entity.name,
+      detail: `${entity.empCode || '—'} · marked Inactive`,
+      status: 'system'
+    });
+    toast('Employee deactivated', 'success');
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+
+async function reactivateEmployee(entity) {
+  if (!canEdit()) return;
+  if (!confirm(`Reactivate ${entity.name}?`)) return;
+  try {
+    await updateDoc(doc(db, 'people', entity.id), {
+      status: 'Active',
+      exitedAt: null,
+      reactivatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    await logAudit({
+      action: 'Employee reactivated',
+      assetName: entity.name,
+      detail: `${entity.empCode || '—'} · marked Active`,
+      status: 'system'
+    });
+    toast('Employee reactivated', 'success');
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+}
+$('entitySaveBtn').onclick = async () => {
+  if (!canEdit()) { toast('Read-only role', 'error'); return; }
+  const id = $('entityId').value;
+  const type = $('entityType').value;
+
+  let payload, name;
+  if (type === 'person') {
+    name = $('entityName').value.trim();
+    if (!name) { toast('Name required', 'error'); return; }
+    const email = $('entityEmail').value.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast('Invalid email format', 'error'); return;
+    }
+    payload = {
+      name,
+      empCode: $('entityEmpCode').value.trim(),
+      joinDate: $('entityJoinDate').value || null,
+      email: email,
+      extra: $('entityExtra').value.trim()
+    };
+  } else {
+    name = $('entityNameLoc').value.trim();
+    if (!name) { toast('Location name required', 'error'); return; }
+    payload = {
+      name,
+      extra: $('entityExtraLoc').value.trim()
+    };
+  }
+
+  const coll = type === 'person' ? 'people' : 'locations';
+  try {
+    if (id) {
+      await updateDoc(doc(db, coll, id), { ...payload, updatedAt: serverTimestamp() });
+      await logAudit({ action: `${type === 'person' ? 'Employee' : 'Location'} updated`, assetName: name, status: 'system' });
+    } else {
+      await addDoc(collection(db, coll), { ...payload, createdAt: serverTimestamp() });
+      await logAudit({ action: `${type === 'person' ? 'Employee' : 'Location'} added`, assetName: name, status: 'system' });
+    }
+    toast('Saved', 'success');
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+};
+$('entityDeleteBtn').onclick = async () => {
+  if (!canEdit()) { toast('Read-only role', 'error'); return; }
+  const id = $('entityId').value;
+  const type = $('entityType').value;
+  if (!id) return;
+  if (!confirm('Delete this entry?')) return;
+  try {
+    const name = $('entityName').value;
+    await deleteDoc(doc(db, type === 'person' ? 'people' : 'locations', id));
+    await logAudit({ action: `${type === 'person' ? 'Person' : 'Location'} deleted`, assetName: name, status: 'system' });
+    toast('Deleted', 'success');
+    closeModals();
+  } catch (e) { toast('Failed: ' + e.message, 'error'); }
+};
+
+/* ===================== MODAL CLOSING ===================== */
+function closeModals() {
+  document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('show'));
+}
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeModals);
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.onclick = (e) => { if (e.target === m) closeModals(); };
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModals(); });
+
+/* ===================== BUTTONS ===================== */
+$('newAssetBtn').onclick = () => openAssetModal();
+$('newAssetBtnDash').onclick = () => openAssetModal();
+$('addPersonBtn').onclick = () => openEntityModal('person');
+$('addLocationBtn').onclick = () => openEntityModal('location');
+
+/* ===================== FILTERS ===================== */
+['searchInput','filterCategory','filterStatus','filterLocation'].forEach(id => {
+  $(id).oninput = () => renderRegistry();
+  $(id).onchange = () => renderRegistry();
+});
+
+/* ===================== EXCEL IMPORT ===================== */
+const VALID_CATEGORIES = ['IT/Electronics','Office Furniture','Spare Parts','Manufacturing Equipment','Stationery','Other'];
+const VALID_STATUSES = ['In Store','Issued','In Repair','Returned','Sold','Disposed'];
+
+let pendingImport = null; // { employees: [...], assets: [...], locations: [...], errors: [...] }
+
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      parseImportWorkbook(wb);
+    } catch (err) {
+      console.error(err);
+      toast('Could not read file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = ''; // reset so same file can be re-imported
+};
+
+function parseImportWorkbook(wb) {
+  const result = { employees: [], assets: [], locations: [], errors: [] };
+
+  const fmtDateCell = (v) => {
+    if (!v) return null;
+    if (v instanceof Date) return v.toISOString().slice(0, 10);
+    if (typeof v === 'number') {
+      // Excel serial date
+      const ms = (v - 25569) * 86400 * 1000;
+      const d = new Date(ms);
+      return isNaN(d) ? null : d.toISOString().slice(0, 10);
+    }
+    if (typeof v === 'string') {
+      const s = v.trim();
+      if (!s) return null;
+      // Try YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      // Try DD/MM/YYYY or DD-MM-YYYY
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      const d = new Date(s);
+      return isNaN(d) ? null : d.toISOString().slice(0, 10);
+    }
+    return null;
+  };
+
+  // Convert sheet to JSON, skipping the title rows (header is on row 4 → header index = 3 in 0-based)
+  const sheetToRows = (sheetName) => {
+    const ws = wb.Sheets[sheetName];
+    if (!ws) return [];
+    // Use header at row index 3 (Excel row 4)
+    const rows = XLSX.utils.sheet_to_json(ws, { range: 3, defval: '', raw: true });
+    // Filter out italicized example rows by detecting that they match the seeded examples
+    // (We'll rely on the user to delete examples — but we'll also flag them in preview)
+    return rows;
+  };
+
+  // ===== EMPLOYEES =====
+  const empRows = sheetToRows('Employees');
+  empRows.forEach((row, i) => {
+    const rowNum = i + 5;
+    const name = String(row['Full Name *'] || '').trim();
+    if (!name) return; // skip empty
+    const empCode = String(row['Employee Code'] || '').trim();
+    const joinDate = fmtDateCell(row['Date of Joining (YYYY-MM-DD)']);
+    const email = String(row['Company Email'] || '').trim();
+    const extra = String(row['Department / Role'] || '').trim();
+    const office = String(row['Office Location'] || '').trim();
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      result.errors.push(`Employees row ${rowNum}: invalid email format "${email}"`);
+      return;
+    }
+
+    result.employees.push({ name, empCode, joinDate, email, extra, office, _row: rowNum });
+  });
+
+  // ===== LOCATIONS =====
+  const locRows = sheetToRows('Locations');
+  locRows.forEach((row, i) => {
+    const rowNum = i + 5;
+    const name = String(row['Location Name *'] || '').trim();
+    if (!name) return;
+    const extra = String(row['Description / Address'] || '').trim();
+    result.locations.push({ name, extra, _row: rowNum });
+  });
+
+  // ===== ASSETS =====
+  const assetRows = sheetToRows('Assets');
+  assetRows.forEach((row, i) => {
+    const rowNum = i + 5;
+    const name = String(row['Item Name *'] || '').trim();
+    if (!name) return;
+
+    const category = String(row['Category *'] || '').trim();
+    const status = String(row['Status *'] || '').trim();
+    const location = String(row['Office/Location *'] || '').trim();
+    const boughtDate = fmtDateCell(row['Bought Date *']);
+    const price = Number(row['Price (INR) *']) || 0;
+
+    const errs = [];
+    if (!category) errs.push('Category required');
+    else if (!VALID_CATEGORIES.includes(category)) errs.push(`invalid category "${category}"`);
+    if (!status) errs.push('Status required');
+    else if (!VALID_STATUSES.includes(status)) errs.push(`invalid status "${status}"`);
+    if (!location) errs.push('Location required');
+    if (!boughtDate) errs.push('Bought Date required');
+
+    if (errs.length) {
+      result.errors.push(`Assets row ${rowNum} (${name}): ${errs.join(', ')}`);
+      return;
+    }
+
+    result.assets.push({
+      name,
+      category,
+      brand: String(row['Brand'] || '').trim(),
+      model: String(row['Model'] || '').trim(),
+      serial: String(row['Serial Number'] || '').trim(),
+      quantity: Number(row['Quantity']) || 1,
+      boughtDate,
+      price,
+      vendor: String(row['Vendor'] || '').trim(),
+      invoice: String(row['Invoice/PO No.'] || '').trim(),
+      warranty: fmtDateCell(row['Warranty Expiry']),
+      status,
+      location,
+      issuedToName: String(row['Issued To (Employee Name — must match Employees sheet)'] || '').trim() || null,
+      issuedDate: fmtDateCell(row['Issued On']),
+      notes: String(row['Notes / Remarks'] || '').trim(),
+      _row: rowNum
+    });
+  });
+
+  pendingImport = result;
+  showImportPreview();
+}
+
+function showImportPreview() {
+  $('importModal').classList.add('show');
+  const r = pendingImport;
+  const totalValid = r.employees.length + r.locations.length + r.assets.length;
+
+  $('importSummary').innerHTML = `
+    <div class="action-banner" style="background:rgba(122,168,212,0.08); border-color:rgba(122,168,212,0.3); color:var(--info);">
+      <span class="ico">⬆</span>
+      <div>
+        <div style="font-weight:500;">Found ${totalValid} valid rows ready to import</div>
+        <div style="font-size:11px; margin-top:2px; color:var(--text-dim);">
+          ${r.employees.length} employees · ${r.locations.length} locations · ${r.assets.length} assets
+          ${r.errors.length ? ` · <span style="color:var(--danger);">${r.errors.length} errors</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  let html = '';
+
+  if (r.errors.length) {
+    html += `<details style="margin-bottom:12px;"><summary style="cursor:pointer; color:var(--danger); font-size:13px; font-weight:500;">⚠ ${r.errors.length} rows had errors and will be skipped — click to view</summary>
+      <div style="background:rgba(232,123,107,0.05); border:1px solid rgba(232,123,107,0.2); border-radius:5px; padding:10px; margin-top:8px; font-size:12px; max-height:160px; overflow-y:auto;">
+        ${r.errors.map(e => `<div style="padding:2px 0; font-family:var(--font-mono); font-size:11px;">${escapeHtml(e)}</div>`).join('')}
+      </div>
+    </details>`;
+  }
+
+  if (r.employees.length) {
+    html += `<details open><summary style="cursor:pointer; font-weight:500; padding:6px 0;">👥 Employees (${r.employees.length})</summary>
+      <div style="font-size:12px; max-height:200px; overflow-y:auto; border:1px solid var(--border); border-radius:5px; margin-top:6px;">
+        ${r.employees.map(e => `
+          <div style="padding:6px 10px; border-bottom:1px solid var(--border); display:flex; gap:8px;">
+            <span style="font-family:var(--font-mono); color:var(--accent); min-width:60px;">${escapeHtml(e.empCode || '—')}</span>
+            <span style="flex:1;">${escapeHtml(e.name)}</span>
+            <span class="muted">${escapeHtml(e.extra || '')}</span>
+          </div>
+        `).join('')}
+      </div>
+    </details>`;
+  }
+
+  if (r.locations.length) {
+    html += `<details><summary style="cursor:pointer; font-weight:500; padding:6px 0;">📍 Locations (${r.locations.length})</summary>
+      <div style="font-size:12px; max-height:160px; overflow-y:auto; border:1px solid var(--border); border-radius:5px; margin-top:6px;">
+        ${r.locations.map(l => `<div style="padding:6px 10px; border-bottom:1px solid var(--border);"><strong>${escapeHtml(l.name)}</strong> — <span class="muted">${escapeHtml(l.extra || '')}</span></div>`).join('')}
+      </div>
+    </details>`;
+  }
+
+  if (r.assets.length) {
+    html += `<details open><summary style="cursor:pointer; font-weight:500; padding:6px 0;">📦 Assets (${r.assets.length})</summary>
+      <div style="font-size:12px; max-height:280px; overflow-y:auto; border:1px solid var(--border); border-radius:5px; margin-top:6px;">
+        ${r.assets.map(a => `
+          <div style="padding:6px 10px; border-bottom:1px solid var(--border);">
+            <div style="display:flex; gap:8px; align-items:baseline;">
+              <span style="flex:1; font-weight:500;">${escapeHtml(a.name)}</span>
+              <span class="muted" style="font-size:11px;">${escapeHtml(a.category)}</span>
+            </div>
+            <div class="muted" style="font-size:11px;">${escapeHtml(a.location)} · ${fmtINR(a.price)} · ${escapeHtml(a.status)}${a.issuedToName ? ' · → ' + escapeHtml(a.issuedToName) : ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    </details>`;
+  }
+
+  if (!totalValid && !r.errors.length) {
+    html += `<div class="empty"><div class="icon">∅</div>No data found. Make sure you filled the Employees, Assets, or Locations sheets and saved as .xlsx.</div>`;
+  }
+
+  $('importPreview').innerHTML = html;
+  $('importCommitBtn').disabled = totalValid === 0;
+  $('importCommitBtn').textContent = canApprove()
+    ? `Import ${totalValid} rows now`
+    : `Submit ${totalValid} rows for approval`;
+}
+
+$('importCommitBtn').onclick = async () => {
+  if (!pendingImport) return;
+  const r = pendingImport;
+  $('importCommitBtn').disabled = true;
+  $('importCommitBtn').textContent = 'Working…';
+
+  try {
+    if (canApprove()) {
+      await commitImport(r);
+    } else {
+      // Operator: route entire batch as one approval
+      await submitImportForApproval(r);
+    }
+    closeModals();
+    pendingImport = null;
+  } catch (e) {
+    console.error(e);
+    toast('Import failed: ' + e.message, 'error');
+  } finally {
+    $('importCommitBtn').disabled = false;
+  }
+};
+
+async function commitImport(r) {
+  let added = 0, skipped = 0;
+
+  // 1. Locations first
+  for (const l of r.locations) {
+    const exists = state.locations.find(x => x.name.toLowerCase() === l.name.toLowerCase());
+    if (exists) { skipped++; continue; }
+    await addDoc(collection(db, 'locations'), { name: l.name, extra: l.extra, createdAt: serverTimestamp() });
+    added++;
+  }
+
+  // 2. Employees next
+  const empRefs = {};  // name -> id (so we can wire issuedTo on assets)
+  for (const e of r.employees) {
+    const exists = state.people.find(x => x.name.toLowerCase() === e.name.toLowerCase());
+    if (exists) { empRefs[e.name.toLowerCase()] = exists.id; skipped++; continue; }
+    const ref = await addDoc(collection(db, 'people'), {
+      name: e.name, empCode: e.empCode || '', joinDate: e.joinDate || null,
+      email: e.email || '', extra: e.extra || '', status: 'Active',
+      createdAt: serverTimestamp()
+    });
+    empRefs[e.name.toLowerCase()] = ref.id;
+    added++;
+  }
+
+  // Wait briefly for the people snapshot listener to update state.people so subsequent issuedTo lookups work
+  // (We already have empRefs from this import, so we use that.)
+
+  // 3. Assets — allocate codes, link issuedTo
+  for (const a of r.assets) {
+    const code = await allocateAssetCode(a.category);
+    let issuedTo = null, issuedToName = null;
+    if (a.issuedToName) {
+      const empId = empRefs[a.issuedToName.toLowerCase()] ||
+                    state.people.find(p => p.name.toLowerCase() === a.issuedToName.toLowerCase())?.id;
+      if (empId) {
+        issuedTo = empId;
+        issuedToName = a.issuedToName;
+      } else {
+        // Person not found — record as text but unlink
+        issuedToName = a.issuedToName + ' (unlinked)';
+      }
+    }
+    await addDoc(collection(db, 'assets'), {
+      name: a.name, category: a.category, code,
+      brand: a.brand, model: a.model, serial: a.serial,
+      quantity: a.quantity, boughtDate: a.boughtDate, price: a.price,
+      vendor: a.vendor, invoice: a.invoice, warranty: a.warranty,
+      status: a.status, location: a.location,
+      issuedTo, issuedToName, issuedDate: a.issuedDate, notes: a.notes,
+      createdAt: serverTimestamp(),
+      createdBy: state.user.email,
+      updatedAt: serverTimestamp(),
+      lastApprovedBy: state.user.email,
+      lastApprovedAt: serverTimestamp(),
+      importedAt: serverTimestamp()
+    });
+    added++;
+  }
+
+  await logAudit({
+    action: 'Bulk Import (auto-approved)',
+    assetName: '—',
+    detail: `${r.employees.length} employees · ${r.locations.length} locations · ${r.assets.length} assets · ${skipped} duplicates skipped`,
+    status: 'approved',
+    approvedBy: state.user.email,
+    approvedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display
+  });
+
+  toast(`Imported ${added} records${skipped ? ` (${skipped} duplicates skipped)` : ''}`, 'success');
+}
+
+async function submitImportForApproval(r) {
+  await addDoc(collection(db, 'pending'), {
+    kind: 'import',
+    assetName: 'Bulk Import Batch',
+    importPayload: r,  // Contains all the rows
+    summary: `${r.employees.length} employees · ${r.locations.length} locations · ${r.assets.length} assets`,
+    status: 'pending',
+    proposedBy: state.user.email,
+    proposedByName: ROLE_REGISTRY[state.user.email.toLowerCase()]?.display,
+    proposedByUid: state.user.uid,
+    at: serverTimestamp()
+  });
+  await logAudit({
+    action: 'Proposed: bulk import',
+    assetName: 'Bulk Import Batch',
+    detail: `${r.employees.length} employees · ${r.locations.length} locations · ${r.assets.length} assets pending approval`,
+    status: 'pending'
+  });
+  toast('Import batch submitted for management approval', 'success');
+}
+
+/* ===================== EXPORT CSV ===================== */
+function exportCsv() {
+  if (!state.assets.length) { toast('Nothing to export', 'error'); return; }
+  const cols = ['code','name','category','brand','model','serial','quantity','status','location','issuedToName','issuedDate','boughtDate','price','vendor','invoice','warranty','notes'];
+  const csv = [
+    cols.join(','),
+    ...state.assets.map(a => cols.map(c => {
+      const v = a[c] ?? '';
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    }).join(','))
+  ].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `aelius-aim-export-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported', 'success');
+}
+$('exportBtn').onclick = exportCsv;
+$('exportBtn2').onclick = exportCsv;
+
+/* ===================== INIT ===================== */
+setAuthMode('login');
+renderConfigNotice();
+</script>
+</body>
+</html>
