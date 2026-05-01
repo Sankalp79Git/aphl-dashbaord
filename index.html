@@ -1,0 +1,3060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADI·OC — Open Costing</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0e13; color: #e8ecf0; min-height: 100vh; font-size: 13px; line-height: 1.5; }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: #10161d; border: 1px solid #1f2a35; border-radius: 8px; padding: 40px; max-width: 400px; width: 100%; }
+  .login-card h1 { font-family: Georgia, serif; font-size: 28px; font-weight: 500; color: #d4a574; margin-bottom: 8px; }
+  .login-card .subtitle { font-size: 12px; color: #8a95a3; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 32px; }
+  .login-card label { display: block; font-size: 11px; color: #8a95a3; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; margin-top: 16px; }
+  .login-card input { width: 100%; background: #161e26; border: 1px solid #1f2a35; color: #e8ecf0; padding: 10px 12px; border-radius: 4px; font-size: 14px; font-family: inherit; }
+  .login-card input:focus { outline: none; border-color: #d4a574; }
+  .login-card button { width: 100%; background: #d4a574; color: #0a0e13; border: none; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 24px; font-family: inherit; }
+  .login-card button:hover { background: #e4b884; }
+  .login-card button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-error { background: #3d1a1a; color: #ff9999; padding: 10px 12px; border-radius: 4px; font-size: 13px; margin-top: 16px; display: none; }
+  .app { display: none; } .app.visible { display: block; }
+  header { border-bottom: 1px solid #1f2a35; background: #10161d; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 50; }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand-name { font-family: Georgia, serif; font-size: 22px; color: #d4a574; letter-spacing: 0.02em; font-weight: 500; }
+  .brand-tagline { font-size: 10px; color: #5b6775; letter-spacing: 0.2em; text-transform: uppercase; }
+  .doc-pills { display: flex; gap: 6px; align-items: center; }
+  .doc-pill { font-size: 9px; padding: 3px 8px; color: #8a95a3; border: 1px solid #1f2a35; border-radius: 3px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
+  .doc-pill.live { color: #d4a574; border-color: #5b4410; background: #1a1408; }
+  .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .role-switcher { display: flex; gap: 4px; background: #161e26; border: 1px solid #1f2a35; border-radius: 4px; padding: 2px; }
+  .role-btn { padding: 5px 10px; background: transparent; color: #8a95a3; border: none; font-size: 11px; cursor: pointer; border-radius: 3px; font-family: inherit; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  .role-btn.active { background: #d4a574; color: #0a0e13; font-weight: 600; }
+  .role-label { font-size: 9px; color: #5b6775; text-transform: uppercase; letter-spacing: 0.1em; }
+  .user-info { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .user-info .name { color: #e8ecf0; }
+  .user-info .role-badge { font-size: 9px; padding: 2px 6px; background: #161e26; color: #d4a574; border: 1px solid #1f2a35; border-radius: 3px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+  .logout-btn { background: transparent; border: 1px solid #1f2a35; color: #8a95a3; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; font-family: inherit; }
+  .logout-btn:hover { border-color: #d4664e; color: #d4664e; }
+  nav { background: #10161d; border-bottom: 1px solid #1f2a35; padding: 0 24px; display: flex; gap: 0; overflow-x: auto; position: sticky; top: 56px; z-index: 49; }
+  .tab { padding: 11px 16px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #8a95a3; font-size: 11px; cursor: pointer; white-space: nowrap; font-family: inherit; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+  .tab.active { color: #d4a574; border-bottom-color: #d4a574; font-weight: 600; }
+  .tab:hover:not(.active) { color: #e8ecf0; }
+  main { padding: 24px; max-width: 1500px; margin: 0 auto; }
+  .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; border-bottom: 1px solid #1f2a35; padding-bottom: 14px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-family: Georgia, serif; font-size: 24px; color: #e8ecf0; font-weight: 500; }
+  .section-sub { font-size: 12px; color: #8a95a3; margin-top: 4px; }
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat { background: #10161d; border: 1px solid #1f2a35; border-radius: 4px; padding: 14px 16px; }
+  .stat-label { font-size: 10px; color: #8a95a3; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .stat-value { font-family: Georgia, serif; font-size: 22px; color: #e8ecf0; font-weight: 500; }
+  .stat-sub { font-size: 11px; color: #5b6775; margin-top: 2px; }
+  .table-wrap { background: #10161d; border: 1px solid #1f2a35; border-radius: 4px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1100px; }
+  thead tr { background: #161e26; border-bottom: 1px solid #2a3744; position: sticky; top: 0; }
+  th { text-align: right; padding: 9px 10px; font-size: 10px; font-weight: 600; color: #8a95a3; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; background: #161e26; }
+  th.left, td.left { text-align: left; }
+  td { padding: 9px 10px; text-align: right; border-bottom: 1px solid #1f2a35; font-variant-numeric: tabular-nums; }
+  tbody tr.dash-row { cursor: pointer; }
+  tbody tr.dash-row:hover { background: #161e26; }
+  tbody tr.expanded { background: #161e26; }
+  tr.detail-row { cursor: default; }
+  tr.detail-row td { background: #0a0e13; padding: 0; border-bottom: 2px solid #2a3744; }
+  .detail-content { padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .detail-section h4 { font-size: 10px; color: #8a95a3; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
+  .line-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid #161e26; }
+  .line-row.bold { color: #e8ecf0; font-weight: 600; border-bottom-color: #2a3744; padding-top: 8px; }
+  .line-row.accent { color: #d4a574; font-weight: 700; }
+  .line-row .label { color: #8a95a3; }
+  .line-row.bold .label { color: #e8ecf0; }
+  .line-row.muted .label { color: #5b6775; } .line-row.muted .val { color: #5b6775; }
+  .search-wrap { position: relative; }
+  .search-wrap input { background: #10161d; border: 1px solid #1f2a35; color: #e8ecf0; padding: 7px 10px 7px 32px; font-size: 12px; width: 240px; font-family: inherit; border-radius: 3px; }
+  .search-wrap input:focus { outline: none; border-color: #d4a574; }
+  .search-icon { position: absolute; left: 10px; top: 8px; color: #5b6775; font-size: 12px; pointer-events: none; }
+  .banner { padding: 10px 14px; border-radius: 4px; font-size: 13px; margin-bottom: 16px; }
+  .banner-info { background: #0a2540; color: #85b7eb; border-left: 3px solid #378add; }
+  .banner-good { background: #0a3d2a; color: #7fb069; border-left: 3px solid #7fb069; }
+  .banner-warn { background: #3d2a0a; color: #e6b447; border-left: 3px solid #e6b447; }
+  .banner-bad { background: #3d1a1a; color: #d4664e; border-left: 3px solid #d4664e; }
+  .pill { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+  .pill-mini { background: #0a2540; color: #85b7eb; }
+  .pill-cn { background: #0a3d2a; color: #7fb069; font-family: 'SF Mono', Menlo, monospace; }
+  .pill-inv { background: #3d1a1a; color: #d4664e; font-family: 'SF Mono', Menlo, monospace; }
+  .pill-nil { background: #161e26; color: #8a95a3; font-family: 'SF Mono', Menlo, monospace; }
+  .pill-locked { background: #161e26; color: #5b6775; }
+  .pill-superseded { background: #2a1a08; color: #8a6d4a; font-family: 'SF Mono', Menlo, monospace; text-decoration: line-through; }
+  .pill-out-of-scope { background: #161e26; color: #5b6775; font-size: 9px; }
+  .placeholder { background: #10161d; border: 1px dashed #2a3744; border-radius: 8px; padding: 60px 24px; text-align: center; }
+  .placeholder h3 { font-family: Georgia, serif; font-size: 20px; color: #e8ecf0; margin-bottom: 8px; font-weight: 500; }
+  .placeholder p { color: #8a95a3; font-size: 13px; }
+  .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #8a95a3; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .footer-note { margin-top: 16px; padding: 12px 14px; background: #10161d; border: 1px solid #1f2a35; border-radius: 4px; font-size: 11px; color: #8a95a3; line-height: 1.6; }
+  .footer-note strong { color: #e8ecf0; }
+  .chevron { display: inline-block; width: 14px; color: #5b6775; transition: transform 0.15s; }
+  tr.expanded .chevron { transform: rotate(90deg); color: #d4a574; }
+  .control-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .control-bar .spacer { flex: 1; }
+  .btn { padding: 6px 12px; background: transparent; border: 1px solid #1f2a35; color: #e8ecf0; font-size: 12px; cursor: pointer; border-radius: 3px; font-family: inherit; }
+  .btn:hover { border-color: #d4a574; color: #d4a574; }
+  .btn-primary { background: #d4a574; color: #0a0e13; border-color: #d4a574; font-weight: 600; padding: 8px 16px; }
+  .btn-primary:hover { background: #e4b884; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: #d4a574; }
+  .btn-danger { border-color: #d4664e; color: #d4664e; }
+  .btn-danger:hover { background: #d4664e; color: #0a0e13; }
+  input[type="number"].vol-input { width: 100px; padding: 5px 8px; background: #0a0e13; color: #e8ecf0; border: 1px solid #1f2a35; border-radius: 3px; font-family: inherit; font-size: 13px; text-align: right; }
+  input[type="number"].vol-input:focus { outline: none; border-color: #d4a574; }
+  input[type="number"].vol-input[readonly] { background: #161e26; color: #5b6775; cursor: not-allowed; }
+  input[type="number"].vol-input.missing { border-color: #e6b447; }
+  input[type="number"].vol-input::-webkit-outer-spin-button,
+  input[type="number"].vol-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"].vol-input { -moz-appearance: textfield; }
+  .acc-good { color: #7fb069; font-weight: 600; }
+  .acc-warn { color: #e6b447; font-weight: 600; }
+  .acc-bad { color: #d4664e; font-weight: 600; }
+  .save-indicator { font-size: 11px; color: #5b6775; min-width: 80px; }
+  .save-indicator.saving { color: #e6b447; }
+  .save-indicator.saved { color: #7fb069; }
+  .month-display { font-size: 13px; font-weight: 600; color: #d4a574; }
+  .month-display.closed { color: #7fb069; }
+  .month-display.future { color: #85b7eb; }
+  .tol-input { width: 50px; padding: 4px 6px; background: #0a0e13; color: #e8ecf0; border: 1px solid #1f2a35; border-radius: 3px; font-family: inherit; font-size: 11px; text-align: right; }
+  .sort-toggle, .filter-toggle { font-size: 11px; color: #8a95a3; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .sort-toggle input[type="checkbox"], .filter-toggle input[type="checkbox"] { cursor: pointer; }
+  .recon-row:hover { background: #11181f; }
+  .recon-row.out-of-scope { opacity: 0.45; }
+  .recon-row.out-of-scope:hover { opacity: 0.7; }
+  .month-strip { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding: 4px; background: #0a0e13; border: 1px solid #1f2a35; border-radius: 4px; }
+  .month-card { flex-shrink: 0; min-width: 120px; padding: 8px 12px; background: #10161d; border: 1px solid #1f2a35; border-radius: 3px; cursor: pointer; transition: all 0.15s; text-align: left; font-family: inherit; color: #e8ecf0; }
+  .month-card:hover { border-color: #2a3744; background: #161e26; }
+  .month-card.active { border-color: #d4a574; background: #1a1408; }
+  .month-card.closed { border-color: #2a3a25; }
+  .month-card.future { border-color: #1a2a35; }
+  .month-card-label { font-size: 11px; font-weight: 600; color: #e8ecf0; text-transform: uppercase; letter-spacing: 0.05em; }
+  .month-card.active .month-card-label { color: #d4a574; }
+  .month-card.closed .month-card-label { color: #7fb069; }
+  .month-card.future .month-card-label { color: #85b7eb; }
+  .month-card-status { font-size: 9px; color: #5b6775; margin-top: 3px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .month-card-detail { font-size: 10px; color: #5b6775; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #10161d; border: 1px solid #1f2a35; border-radius: 8px; max-width: 560px; width: 100%; padding: 28px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; color: #e8ecf0; margin-bottom: 12px; }
+  .modal-body { font-size: 13px; color: #8a95a3; line-height: 1.6; margin-bottom: 16px; }
+  .modal-grid { background: #0a0e13; border: 1px solid #1f2a35; border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13px; }
+  .modal-grid .label { color: #8a95a3; }
+  .modal-grid .val { color: #e8ecf0; font-variant-numeric: tabular-nums; }
+  .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .closed-banner { background: #1a2a18; color: #7fb069; padding: 12px 16px; border-radius: 4px; border-left: 3px solid #7fb069; font-size: 13px; margin-bottom: 16px; }
+  .future-banner { background: #0a2540; color: #85b7eb; padding: 12px 16px; border-radius: 4px; border-left: 3px solid #85b7eb; font-size: 13px; margin-bottom: 16px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; z-index: 1100; background: #10161d; border: 1px solid #7fb069; color: #e8ecf0; padding: 14px 18px; border-radius: 4px; font-size: 13px; max-width: 460px; box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+  .toast.error { border-color: #d4664e; }
+</style>
+</head>
+<body>
+<div id="loading" class="loading-screen">Initialising…</div>
+<div id="login-screen" class="login-wrap" style="display: none;">
+  <div class="login-card">
+    <h1>ADI·OC</h1>
+    <div class="subtitle">Aelius × Pilgrim · Open Costing</div>
+    <label>Email</label><input type="email" id="login-email" autocomplete="email">
+    <label>Password</label><input type="password" id="login-password" autocomplete="current-password">
+    <button id="login-btn" onclick="handleLogin()">Sign in</button>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+<div id="app" class="app">
+  <header>
+    <div class="brand"><div class="brand-name">ADI·OC</div><div class="brand-tagline">Open Costing</div></div>
+    <div class="doc-pills"><span class="doc-pill">APHL × Pilgrim</span><span class="doc-pill">v3.0</span><span class="doc-pill live" id="view-pill">Master</span></div>
+    <div class="header-right">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px" id="role-switcher-wrap">
+        <span class="role-label">Preview as</span>
+        <div class="role-switcher" id="role-switcher"></div>
+      </div>
+      <div class="user-info"><span class="name" id="user-name">—</span><span class="role-badge" id="user-role">—</span><a id="formulations-link" href="formulations.html" class="logout-btn" style="text-decoration:none; display:none">Formulations →</a><button class="logout-btn" onclick="handleLogout()">Sign out</button></div>
+    </div>
+  </header>
+  <nav id="nav"></nav>
+  <main id="main"></main>
+</div>
+<div id="modal-container"></div>
+<div id="toast-container"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA74TGZkHW1XgsmTvrQ8Q6S58OL0oSq0yg",
+  authDomain: "aphl-pilgrim-open-costing.firebaseapp.com",
+  projectId: "aphl-pilgrim-open-costing",
+  storageBucket: "aphl-pilgrim-open-costing.firebasestorage.app",
+  messagingSenderId: "1044680408642",
+  appId: "1:1044680408642:web:a7625eb185ec4b547237db"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+const REOPEN_WINDOW_DAYS = 7;
+const HORIZON_MONTHS = 6;
+
+const state = {
+  currentUser: null, userProfile: null, realRole: null, previewRole: null,
+  tab: 'dashboard',
+  settings: null, skus: [], rms: [], cc_matrix: null, formulations: {}, historicalDemand: {},
+  searchQuery: '', expandedSku: null,
+  loaded: false,
+  allRecons: {}, viewingMonthCode: null, currentMonthCode: null,
+  history: [],
+  changeLog: [], changeLogFilter: 'all', changeLogLimit: 50,
+  proposals: [], proposalsFilter: 'pending',
+  scenario: { rmId: null, deltaPct: null, customPct: '', result: null },
+  purchaseHistory: [], phSearch: '', phLoaded: false,
+  saveTimer: null, saveStatus: 'idle',
+  sortByAccuracy: false, hideOutOfScope: false,
+  modal: null, toast: null
+};
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthCodeName = mc => { const [y,m] = mc.split('-').map(Number); return MONTHS[m-1] + ' ' + y; };
+const monthCodeShort = mc => { const [y,m] = mc.split('-').map(Number); return MONTHS_SHORT[m-1] + " '" + String(y).slice(2); };
+const nextMC = mc => { const [y,m] = mc.split('-').map(Number); const nm = m===12?1:m+1; const ny = m===12?y+1:y; return ny + '-' + String(nm).padStart(2,'0'); };
+const prevMC = mc => { const [y,m] = mc.split('-').map(Number); const pm = m===1?12:m-1; const py = m===1?y-1:y; return py + '-' + String(pm).padStart(2,'0'); };
+const todayMC = () => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth()+1).padStart(2,'0'); };
+const daysSince = iso => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+const isMini = name => /mini|miniature|8gm/i.test(name);
+
+function calcSKU(sku, s) {
+  const rm_w_f = (sku.rm_cost_kg_base || 0) * (1 + s.freight_pct);
+  const rm_margin = rm_w_f * s.rm_margin_pct;
+  const rm_wst = s.pm_handling_pct * (rm_w_f + rm_margin);
+  const rm_kg = rm_w_f + rm_margin + rm_wst + s.utilities_per_kg;
+  const rm_unit_raw = (rm_kg / 1000) * (sku.size || 0);
+  const rm_unit = rm_unit_raw + (sku.fixed_cc || 0);
+  const pm_items = (sku.jar_bottle||0)+(sku.cap_pump||0)+(sku.label||0)+(sku.monocarton||0)+(sku.shrink||0);
+  const pm_h = pm_items * s.pm_handling_pct;
+  const pm_total = pm_items + pm_h + (sku.freight_pm||0)+(sku.freight_label||0)+(sku.freight_mono||0)+(sku.outer_carton||0)+(sku.ink||0);
+  const total = rm_unit + pm_total;
+  const exf = total * (1 + s.gst_pct);
+  return { rm_w_f, rm_margin, rm_wst, rm_kg, rm_unit_raw, rm_unit, pm_items, pm_h, pm_total, total, exf };
+}
+
+// === LIVE RM COST CALCULATION ===
+// Computes effective rm_cost_kg_base for a SKU live from its formulation × current RM rates.
+// Returns { cost, unresolved: [...trade names], source: 'live'|'cached'|'live-with-fallback' }
+function liveRMCost(sku) {
+  const formulation = state.formulations[String(sku.sno)] || state.formulations[sku.sno];
+  if (!formulation || !formulation.ingredients || formulation.ingredients.length === 0) {
+    return { cost: Number(sku.rm_cost_kg_base) || 0, unresolved: [], source: 'cached' };
+  }
+  // Build rmLookup if not yet built (cached on state for performance)
+  if (!state._rmLookup || state._rmLookupVersion !== state.rms.length) {
+    state._rmLookup = {};
+    state.rms.forEach(r => {
+      if (r.name) state._rmLookup[String(r.name).trim().toLowerCase()] = Number(r.rate) || 0;
+    });
+    state._rmLookupVersion = state.rms.length;
+  }
+  let cost = 0;
+  const unresolved = [];
+  formulation.ingredients.forEach(ing => {
+    const trade = String(ing.trade || '').trim();
+    const lookupKey = trade.toLowerCase();
+    const liveRate = state._rmLookup[lookupKey];
+    let rateUsed = null;
+    if (liveRate != null) {
+      rateUsed = liveRate;
+    } else if (ing.hardcoded_rate != null) {
+      rateUsed = Number(ing.hardcoded_rate);
+    }
+    if (rateUsed != null && rateUsed > 0) {
+      cost += (Number(ing.qty_pct) / 100) * rateUsed;
+    } else {
+      unresolved.push(trade);
+    }
+  });
+  return { cost: Math.round(cost * 10000) / 10000, unresolved, source: unresolved.length > 0 ? 'live-partial' : 'live' };
+}
+
+// Should we use live calc? Only for admin viewing as admin (not previewing as another role).
+function useLiveCalc() {
+  return state.realRole === 'admin' && state.previewRole === 'admin';
+}
+
+// Invalidate the rmLookup cache when RMs change (called from save handlers)
+function invalidateRMLookup() {
+  state._rmLookup = null;
+  state._rmLookupVersion = null;
+}
+
+// === PROPOSAL HELPERS ===
+// Returns true if the current user (in their effective role) should write changes directly,
+// false if they should submit proposals for approval.
+function canWriteDirectly() {
+  return state.realRole === 'admin' && state.previewRole === 'admin';
+}
+
+// Returns true if user can edit (admin or editor in their effective role).
+// Editors create proposals; admin writes directly.
+function canEdit() {
+  if (state.realRole === 'admin' && state.previewRole === 'admin') return true;
+  if (state.realRole === 'admin' && state.previewRole === 'editor') return true; // admin previewing as editor
+  if (state.realRole === 'editor') return true;
+  return false;
+}
+
+// Submit a proposal to Firestore.
+// payload: { entity, target_id, target_label, before_summary, after_summary, payload, reason }
+async function submitProposal(p) {
+  const id = 'prop_' + p.entity + '_' + Date.now();
+  const doc_data = {
+    ts: new Date().toISOString(),
+    proposer_uid: state.currentUser.uid,
+    proposer_name: state.userProfile.name,
+    proposer_role: state.realRole,
+    entity: p.entity,
+    target_id: p.target_id,
+    target_label: p.target_label,
+    before_summary: p.before_summary,
+    after_summary: p.after_summary,
+    payload: p.payload,
+    reason: p.reason,
+    status: 'pending',
+    decided_at: null,
+    decided_by: null,
+    decision_reason: null
+  };
+  await setDoc(doc(db, 'proposals', id), doc_data);
+  // Update local state
+  state.proposals.unshift({ id, ...doc_data });
+  return id;
+}
+
+function pendingProposalsCount() {
+  return state.proposals.filter(p => p.status === 'pending').length;
+}
+
+// === HISTORICAL DEMAND & FORECAST ===
+// Get historical demand series for a SKU as [{monthCode, units}] sorted ascending
+function getHistorySeries(sno) {
+  const series = [];
+  Object.values(state.historicalDemand).forEach(d => {
+    if (Number(d.sno) === Number(sno)) {
+      series.push({ monthCode: d.monthCode, units: Number(d.units) || 0 });
+    }
+  });
+  series.sort((a, b) => a.monthCode.localeCompare(b.monthCode));
+  return series;
+}
+
+// Compute data quality assessment for a SKU based on its historical demand data.
+// Returns { months, status: 'excellent'|'good'|'limited'|'insufficient'|'none', label }
+function dataQuality(sno) {
+  const series = getHistorySeries(sno);
+  const n = series.length;
+  if (n === 0) return { months: 0, status: 'none', label: 'No historical data' };
+  if (n < 6) return { months: n, status: 'insufficient', label: `${n} months · insufficient for forecast` };
+  if (n < 12) return { months: n, status: 'limited', label: `${n} months · limited history` };
+  if (n < 24) return { months: n, status: 'good', label: `${n} months · good history` };
+  return { months: n, status: 'excellent', label: `${n} months · excellent history` };
+}
+
+// Compute next monthCode after a given one (e.g. "2026-04" -> "2026-05")
+function nextMonth(mc) {
+  const [y, m] = mc.split('-').map(Number);
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+// Linear regression on [{x, y}] points, returns {slope, intercept}
+function linearRegression(points) {
+  const n = points.length;
+  if (n < 2) return { slope: 0, intercept: points[0]?.y || 0 };
+  let sx = 0, sy = 0, sxy = 0, sxx = 0;
+  points.forEach(p => { sx += p.x; sy += p.y; sxy += p.x * p.y; sxx += p.x * p.x; });
+  const slope = (n * sxy - sx * sy) / (n * sxx - sx * sx);
+  const intercept = (sy - slope * sx) / n;
+  return { slope: isFinite(slope) ? slope : 0, intercept: isFinite(intercept) ? intercept : 0 };
+}
+
+// Compute forecast for next 6 months for a SKU.
+// Returns { history: [{monthCode, units, isHistory: true}],
+//           forecast: [{monthCode, low, mid, high, isHistory: false}],
+//           quality, residualStdDev, hasForecast }
+function computeForecast(sno, forecastMonths = 6) {
+  const series = getHistorySeries(sno);
+  const quality = dataQuality(sno);
+
+  // Mark all historical points
+  const history = series.map(s => ({ ...s, isHistory: true }));
+
+  // No forecast for insufficient/none
+  if (quality.status === 'none' || quality.status === 'insufficient') {
+    return { history, forecast: [], quality, residualStdDev: 0, hasForecast: false };
+  }
+
+  // Build linear trend from points indexed 0..n-1
+  const points = series.map((s, i) => ({ x: i, y: s.units }));
+  const { slope, intercept } = linearRegression(points);
+
+  // Compute residuals to estimate uncertainty (std deviation of points around trend line)
+  let sumSqResid = 0;
+  points.forEach(p => {
+    const predicted = intercept + slope * p.x;
+    sumSqResid += Math.pow(p.y - predicted, 2);
+  });
+  const residualStdDev = points.length > 1 ? Math.sqrt(sumSqResid / (points.length - 1)) : 0;
+
+  // For seasonality, only use if 24+ months: compute month-of-year multiplier
+  // (Average ratio of month X to overall average, across years)
+  let seasonalityFactors = {}; // key: month (1-12), val: multiplier
+  if (quality.status === 'excellent' && series.length >= 24) {
+    const overallAvg = series.reduce((a, b) => a + b.units, 0) / series.length;
+    if (overallAvg > 0) {
+      const byMonth = {};
+      series.forEach(s => {
+        const m = Number(s.monthCode.split('-')[1]);
+        if (!byMonth[m]) byMonth[m] = [];
+        byMonth[m].push(s.units);
+      });
+      for (let m = 1; m <= 12; m++) {
+        if (byMonth[m] && byMonth[m].length >= 2) {
+          const monthAvg = byMonth[m].reduce((a, b) => a + b, 0) / byMonth[m].length;
+          // Dampen the factor — pure ratio is too aggressive for lumpy data
+          const rawFactor = monthAvg / overallAvg;
+          seasonalityFactors[m] = 0.5 + 0.5 * rawFactor; // 50% blend toward 1.0
+        } else {
+          seasonalityFactors[m] = 1.0;
+        }
+      }
+    }
+  }
+
+  // Generate forecast points
+  const lastMonthCode = series[series.length - 1].monthCode;
+  const forecast = [];
+  let curMonth = lastMonthCode;
+  for (let k = 1; k <= forecastMonths; k++) {
+    curMonth = nextMonth(curMonth);
+    const x = series.length - 1 + k;
+    let trendValue = Math.max(0, intercept + slope * x);
+    const monthNum = Number(curMonth.split('-')[1]);
+    if (seasonalityFactors[monthNum]) {
+      trendValue *= seasonalityFactors[monthNum];
+    }
+    // Confidence band widens with forecast distance (sqrt of months ahead)
+    const widening = Math.sqrt(k);
+    const sigma = residualStdDev * widening;
+    const low = Math.max(0, trendValue - sigma);
+    const high = Math.max(0, trendValue + sigma);
+    forecast.push({
+      monthCode: curMonth,
+      low: Math.round(low),
+      mid: Math.round(trendValue),
+      high: Math.round(high),
+      isHistory: false
+    });
+  }
+
+  return { history, forecast, quality, residualStdDev, hasForecast: true };
+}
+
+// Format month code like "2024-08" -> "Aug 24"
+function shortMonth(mc) {
+  const [y, m] = mc.split('-').map(Number);
+  return `${MONTHS_SHORT[m - 1]} ${String(y).slice(2)}`;
+}
+
+// Render an SVG bar chart showing history + forecast for one SKU
+// Returns HTML string.
+function renderDemandChart(sno) {
+  const fc = computeForecast(sno, 6);
+  if (fc.quality.status === 'none') {
+    return `<div style="text-align:center;color:#5b6775;padding:24px;font-size:12px">No historical demand data available for this SKU.</div>`;
+  }
+
+  // Combine history + forecast for axes scaling, but render separately
+  const allValues = [
+    ...fc.history.map(p => p.units),
+    ...fc.forecast.map(p => p.high)
+  ];
+  const maxVal = Math.max(...allValues, 1);
+
+  // Show only last 24 months of history to keep chart readable
+  const visibleHistory = fc.history.slice(-24);
+  const allPoints = [...visibleHistory, ...fc.forecast];
+  const totalBars = allPoints.length;
+
+  if (totalBars === 0) {
+    return `<div style="text-align:center;color:#5b6775;padding:24px;font-size:12px">No data to chart.</div>`;
+  }
+
+  // SVG dimensions
+  const W = 720, H = 200;
+  const PAD_T = 12, PAD_B = 38, PAD_L = 50, PAD_R = 12;
+  const plotW = W - PAD_L - PAD_R;
+  const plotH = H - PAD_T - PAD_B;
+  const barW = plotW / totalBars;
+  const innerBarW = Math.max(2, barW - 3);
+
+  // Compute trend line (simple linear regression on history for visual)
+  let trendLine = '';
+  if (visibleHistory.length >= 2) {
+    const tpoints = visibleHistory.map((p, i) => ({ x: i, y: p.units }));
+    const lr = linearRegression(tpoints);
+    // Project trend line through history and forecast x-range
+    const x1 = 0;
+    const y1 = lr.intercept;
+    const x2 = totalBars - 1;
+    const y2 = lr.intercept + lr.slope * (x2 - 0); // continue through forecast period
+    const sx1 = PAD_L + (0 + 0.5) * barW;
+    const sy1 = PAD_T + plotH - (Math.max(0, y1) / maxVal) * plotH;
+    const sx2 = PAD_L + (x2 + 0.5) * barW;
+    const sy2 = PAD_T + plotH - (Math.max(0, y2) / maxVal) * plotH;
+    trendLine = `<line x1="${sx1}" y1="${sy1}" x2="${sx2}" y2="${sy2}" stroke="#d4a574" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.6"/>`;
+  }
+
+  // Render bars
+  const barsHtml = allPoints.map((p, i) => {
+    const x = PAD_L + i * barW + (barW - innerBarW) / 2;
+    if (p.isHistory) {
+      const h = (p.units / maxVal) * plotH;
+      const y = PAD_T + plotH - h;
+      const tooltip = `${shortMonth(p.monthCode)}: ${p.units.toLocaleString('en-IN')} units (actual)`;
+      return `<rect x="${x}" y="${y}" width="${innerBarW}" height="${h}" fill="#85b7eb" opacity="0.85"><title>${tooltip}</title></rect>`;
+    } else {
+      // Forecast: show a "high-low" band as a slim rect, with mid as a marker
+      const lowH = (p.low / maxVal) * plotH;
+      const lowY = PAD_T + plotH - lowH;
+      const highH = (p.high / maxVal) * plotH;
+      const highY = PAD_T + plotH - highH;
+      const midH = (p.mid / maxVal) * plotH;
+      const midY = PAD_T + plotH - midH;
+      const bandH = lowY - highY;
+      const tooltip = `${shortMonth(p.monthCode)}: ${p.mid.toLocaleString('en-IN')} units (forecast · range ${p.low.toLocaleString('en-IN')}-${p.high.toLocaleString('en-IN')})`;
+      // Band rect (high to low, transparent)
+      // Mid bar (solid)
+      return `
+        <rect x="${x}" y="${highY}" width="${innerBarW}" height="${bandH}" fill="#d4a574" opacity="0.18"><title>${tooltip}</title></rect>
+        <rect x="${x}" y="${midY}" width="${innerBarW}" height="${midH}" fill="#d4a574" opacity="0.55"><title>${tooltip}</title></rect>
+      `;
+    }
+  }).join('');
+
+  // X-axis labels (every 3rd month to avoid clutter)
+  const labelInterval = Math.ceil(totalBars / 12);
+  const xLabels = allPoints.map((p, i) => {
+    if (i % labelInterval !== 0 && i !== totalBars - 1) return '';
+    const x = PAD_L + i * barW + barW / 2;
+    const y = H - 18;
+    const label = shortMonth(p.monthCode);
+    return `<text x="${x}" y="${y}" text-anchor="middle" font-size="9" fill="#5b6775" font-family="-apple-system,BlinkMacSystemFont,sans-serif">${label}</text>`;
+  }).join('');
+
+  // Y-axis: 4 grid lines
+  const yLabels = [];
+  const gridLines = [];
+  for (let i = 0; i <= 3; i++) {
+    const v = (maxVal / 3) * (3 - i);
+    const y = PAD_T + (plotH / 3) * i;
+    yLabels.push(`<text x="${PAD_L - 6}" y="${y + 3}" text-anchor="end" font-size="9" fill="#5b6775" font-family="-apple-system,BlinkMacSystemFont,sans-serif">${v >= 1000 ? (v/1000).toFixed(0)+'K' : Math.round(v)}</text>`);
+    gridLines.push(`<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#1f2a35" stroke-width="0.5"/>`);
+  }
+
+  // Vertical separator between history and forecast
+  let separator = '';
+  if (fc.history.length > 0 && fc.forecast.length > 0) {
+    const sepX = PAD_L + visibleHistory.length * barW;
+    separator = `<line x1="${sepX}" y1="${PAD_T}" x2="${sepX}" y2="${H - PAD_B}" stroke="#5b6775" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5"/>
+                 <text x="${sepX + 4}" y="${PAD_T + 9}" font-size="9" fill="#d4a574" font-family="-apple-system,BlinkMacSystemFont,sans-serif">forecast →</text>`;
+  }
+
+  // Quality badge color
+  const qColor = {
+    'excellent': '#7fb069', 'good': '#85b7eb', 'limited': '#e6b447',
+    'insufficient': '#d4664e', 'none': '#5b6775'
+  }[fc.quality.status];
+
+  // Compute summary stats
+  const histTotal = fc.history.reduce((a, b) => a + b.units, 0);
+  const histAvg = fc.history.length > 0 ? Math.round(histTotal / fc.history.length) : 0;
+  const recentAvg = fc.history.length >= 6 ? Math.round(fc.history.slice(-6).reduce((a, b) => a + b.units, 0) / 6) : null;
+
+  // Forecast summary
+  let forecastSummary = '';
+  if (fc.hasForecast) {
+    const next3Mid = fc.forecast.slice(0, 3).reduce((a, b) => a + b.mid, 0);
+    const next3Low = fc.forecast.slice(0, 3).reduce((a, b) => a + b.low, 0);
+    const next3High = fc.forecast.slice(0, 3).reduce((a, b) => a + b.high, 0);
+    forecastSummary = `<div style="font-size:11px;color:#8a95a3;margin-top:8px">Next 3 months forecast: <strong style="color:#d4a574">${(next3Mid/1000).toFixed(1)}K</strong> units (range ${(next3Low/1000).toFixed(1)}K – ${(next3High/1000).toFixed(1)}K)</div>`;
+  }
+
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;color:#8a95a3">
+        <span style="background:${qColor}22;color:${qColor};padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:0.05em">${fc.quality.label}</span>
+        <span style="margin-left:10px">All-time avg: ${histAvg.toLocaleString('en-IN')}/mo</span>
+        ${recentAvg !== null ? `<span style="margin-left:10px">Last 6mo avg: ${recentAvg.toLocaleString('en-IN')}/mo</span>` : ''}
+      </div>
+      <div style="font-size:10px;color:#5b6775;display:flex;gap:12px;align-items:center">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#85b7eb;opacity:0.85;vertical-align:middle"></span> Actual</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#d4a574;opacity:0.55;vertical-align:middle"></span> Forecast (mid)</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#d4a574;opacity:0.18;vertical-align:middle"></span> Range (low–high)</span>
+      </div>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;display:block">
+      ${gridLines.join('')}
+      ${barsHtml}
+      ${trendLine}
+      ${separator}
+      ${yLabels.join('')}
+      ${xLabels}
+    </svg>
+    ${forecastSummary}
+    <div style="font-size:10px;color:#5b6775;margin-top:6px;font-style:italic">Forecast assumes recent trend continues. Doesn't account for marketing pushes, supply changes, or external events.</div>
+  `;
+}
+
+const fmt = (v,d=2) => (v==null||isNaN(v)) ? '—' : Number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtINR = v => '₹' + fmt(v,2);
+const fmtINR0 = v => '₹' + fmt(Math.round(v),0);
+function pickTier(t) { const tiers = state.cc_matrix?.tiers||[]; return tiers.find(x => x.max===null || t<=x.max) || tiers[tiers.length-1]; }
+
+function computeRecon(rows, tolerance) {
+  const minisAdd = state.cc_matrix?.minis_additional || 4;
+  const inScope = rows.filter(r => Number(r.forecast)>0 || (r.actual!==null && r.actual!==undefined && r.actual!==''));
+  const outOfScope = rows.filter(r => !inScope.includes(r));
+  const missing = rows.filter(r => Number(r.forecast)>0 && (r.actual===null || r.actual===undefined || r.actual===''));
+  const hasAny = inScope.some(r => r.actual!==null && r.actual!==undefined && r.actual!=='');
+  const hasFull = missing.length===0;
+  const hasAnyForecast = rows.some(r => Number(r.forecast)>0);
+  const totalFC = rows.reduce((a,r) => a + (Number(r.forecast)||0), 0);
+  const totalAct = hasAny ? rows.reduce((a,r) => a + (Number(r.actual)||0), 0) : null;
+  const tierFC = pickTier(totalFC);
+  const tierAct = totalAct!==null ? pickTier(totalAct) : null;
+  const billedFC = rows.reduce((a,r) => a + (Number(r.forecast)||0) * (tierFC.rate + (r.mini?minisAdd:0)), 0);
+  const shouldBe = totalAct!==null ? rows.reduce((a,r) => a + (Number(r.actual)||0) * (tierAct.rate + (r.mini?minisAdd:0)), 0) : null;
+  const delta = shouldBe!==null ? billedFC - shouldBe : null;
+  const variance = totalAct!==null && totalFC>0 ? ((totalAct-totalFC)/totalFC*100) : null;
+  const tierShifted = tierAct && tierAct.rate !== tierFC.rate;
+  const withinTol = variance!==null && Math.abs(variance)<=tolerance && !tierShifted;
+  return { hasAny, hasFull, hasAnyForecast, missing, inScope, outOfScope, totalFC, totalAct, tierFC, tierAct, billedFC, shouldBe, delta, variance, tierShifted, withinTol };
+}
+function deriveSettlement(comp) {
+  if (!comp.hasFull || !comp.hasAny) return null;
+  if (comp.withinTol || Math.abs(comp.delta)<1) return { kind:'nil', amount:0 };
+  if (comp.delta>0) return { kind:'cn', amount: comp.delta };
+  return { kind:'invoice', amount: -comp.delta };
+}
+const viewingRecon = () => state.allRecons[state.viewingMonthCode];
+function blankRecon(monthCode) {
+  return {
+    month: monthCodeName(monthCode), monthCode, status:'open', tolerance_pct: 5,
+    rows: state.skus.map(s => ({ sno: s.sno, name: s.name, mini: isMini(s.name), forecast: 0, actual: null })),
+    createdAt: new Date().toISOString(), createdBy: state.userProfile.name
+  };
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    state.currentUser = user;
+    try {
+      const u = await getDoc(doc(db,'users',user.uid));
+      if (!u.exists()) { showLoginError("No profile."); await signOut(auth); return; }
+      state.userProfile = u.data();
+      state.realRole = state.userProfile.role;
+      state.previewRole = state.realRole;
+      document.getElementById('user-name').textContent = state.userProfile.name;
+      document.getElementById('user-role').textContent = state.realRole;
+      document.getElementById('formulations-link').style.display = 'inline-block';
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      await loadAllData();
+      render();
+    } catch (e) { console.error(e); showLoginError("Profile load failed: " + e.message); await signOut(auth); }
+  } else {
+    Object.assign(state, { currentUser:null, userProfile:null, realRole:null, previewRole:null, loaded:false });
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+window.handleLogin = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('login-btn');
+  if (!email||!password) { showLoginError("Email and password required."); return; }
+  btn.disabled = true; btn.textContent = "Signing in...";
+  document.getElementById('login-error').style.display = 'none';
+  try { await signInWithEmailAndPassword(auth, email, password); }
+  catch (err) {
+    btn.disabled = false; btn.textContent = "Sign in";
+    showLoginError({ 'auth/invalid-credential':'Email or password is incorrect.', 'auth/too-many-requests':'Too many attempts.', 'auth/network-request-failed':'Network error.', 'auth/unauthorized-domain':'Domain not authorised.' }[err.code] || err.message);
+  }
+};
+window.handleLogout = async function() {
+  await signOut(auth);
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+};
+function showLoginError(m) { const e = document.getElementById('login-error'); e.textContent = m; e.style.display = 'block'; }
+document.getElementById('login-password').addEventListener('keypress', e => { if (e.key==='Enter') handleLogin(); });
+document.getElementById('login-email').addEventListener('keypress', e => { if (e.key==='Enter') document.getElementById('login-password').focus(); });
+
+async function loadAllData() {
+  try {
+    const sd = await getDoc(doc(db,'settings','global'));
+    if (sd.exists()) state.settings = sd.data();
+    const cd = await getDoc(doc(db,'cc_matrix','current'));
+    if (cd.exists()) state.cc_matrix = cd.data();
+    const skuSnap = await getDocs(collection(db,'skus'));
+    state.skus = skuSnap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (a.sno||0)-(b.sno||0));
+    try {
+      const rmSnap = await getDocs(collection(db,'rm_prices'));
+      state.rms = rmSnap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => (a.sno||0)-(b.sno||0));
+    } catch (e) { state.rms = []; }
+    try {
+      const fSnap = await getDocs(collection(db,'formulations'));
+      state.formulations = {};
+      fSnap.docs.forEach(d => { state.formulations[d.id] = d.data(); });
+    } catch (e) { state.formulations = {}; }
+    try {
+      const hdSnap = await getDocs(collection(db,'historical_demand'));
+      state.historicalDemand = {};
+      hdSnap.docs.forEach(d => { state.historicalDemand[d.id] = d.data(); });
+    } catch (e) { console.error('historical_demand load failed:', e); state.historicalDemand = {}; }
+    try {
+      const clSnap = await getDocs(collection(db,'change_log'));
+      state.changeLog = clSnap.docs.map(d => ({id:d.id, ...d.data()}))
+        .sort((a,b) => String(b.ts||'').localeCompare(String(a.ts||''))); // newest first
+    } catch (e) { console.error('change_log load failed:', e); state.changeLog = []; }
+    try {
+      const pSnap = await getDocs(collection(db,'proposals'));
+      state.proposals = pSnap.docs.map(d => ({id:d.id, ...d.data()}))
+        .sort((a,b) => String(b.ts||'').localeCompare(String(a.ts||''))); // newest first
+    } catch (e) { console.error('proposals load failed:', e); state.proposals = []; }
+    await loadAllReconciliations();
+    state.loaded = true;
+  } catch (err) { console.error(err); alert("Load failed: " + err.message); }
+}
+
+async function loadAllReconciliations() {
+  const snap = await getDocs(collection(db,'reconciliations'));
+  state.allRecons = {};
+  snap.docs.forEach(d => { state.allRecons[d.id] = { id:d.id, ...d.data() }; });
+  const openCodes = Object.keys(state.allRecons).filter(c => state.allRecons[c].status==='open').sort();
+  if (openCodes.length>0) state.currentMonthCode = openCodes[0];
+  else {
+    state.currentMonthCode = todayMC();
+    if (!state.allRecons[state.currentMonthCode]) state.allRecons[state.currentMonthCode] = blankRecon(state.currentMonthCode);
+  }
+  if (!state.viewingMonthCode || !state.allRecons[state.viewingMonthCode]) state.viewingMonthCode = state.currentMonthCode;
+  state.history = Object.values(state.allRecons).filter(r => r.status==='closed' || r.status==='superseded');
+}
+
+function monthStripCodes() {
+  const codes = new Set();
+  const closed = Object.keys(state.allRecons).filter(c => state.allRecons[c].status==='closed' || state.allRecons[c].status==='superseded').sort().slice(-2);
+  closed.forEach(c => codes.add(c));
+  codes.add(state.currentMonthCode);
+  let n = nextMC(state.currentMonthCode);
+  for (let i = 0; i < HORIZON_MONTHS - 1; i++) { codes.add(n); n = nextMC(n); }
+  Object.keys(state.allRecons).forEach(c => { if (state.allRecons[c].status==='open' && c.localeCompare(state.currentMonthCode)>0) codes.add(c); });
+  return [...codes].sort();
+}
+
+// Ensure a recon exists for a given month code (creates blank in memory if missing)
+function ensureReconExists(monthCode) {
+  if (!state.allRecons[monthCode]) state.allRecons[monthCode] = blankRecon(monthCode);
+  return state.allRecons[monthCode];
+}
+
+// CHUNK 2 CHANGE: Save can now happen for current OR future open months
+function scheduleReconSave() {
+  const r = viewingRecon();
+  if (!r) return;
+  if (r.status !== 'open') return;  // closed months never save
+  // Allow save for current month OR any future open month
+  const isFutureOrCurrent = state.viewingMonthCode === state.currentMonthCode || state.viewingMonthCode.localeCompare(state.currentMonthCode) > 0;
+  if (!isFutureOrCurrent) return;
+
+  if (state.saveTimer) clearTimeout(state.saveTimer);
+  state.saveStatus = 'saving'; updateSaveIndicator();
+  state.saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(doc(db,'reconciliations',state.viewingMonthCode), { ...state.allRecons[state.viewingMonthCode], updatedAt: new Date().toISOString(), updatedBy: state.userProfile.name });
+      state.saveStatus = 'saved'; updateSaveIndicator();
+      setTimeout(() => { state.saveStatus = 'idle'; updateSaveIndicator(); }, 2000);
+    } catch (err) { console.error(err); state.saveStatus = 'idle'; updateSaveIndicator(); showToast("Save failed: " + err.message, true); }
+  }, 1500);
+}
+function updateSaveIndicator() {
+  const el = document.getElementById('save-indicator');
+  if (!el) return;
+  if (state.saveStatus==='saving') { el.textContent = 'Saving…'; el.className = 'save-indicator saving'; }
+  else if (state.saveStatus==='saved') { el.textContent = '✓ Saved'; el.className = 'save-indicator saved'; }
+  else { el.textContent = ''; el.className = 'save-indicator'; }
+}
+function showToast(msg, err) {
+  state.toast = { msg, isError: !!err };
+  renderToast();
+  setTimeout(() => { state.toast = null; renderToast(); }, 6000);
+}
+function renderToast() {
+  const el = document.getElementById('toast-container');
+  if (!state.toast) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="toast ${state.toast.isError?'error':''}">${state.toast.msg}</div>`;
+}
+
+async function closeMonth() {
+  const recon = state.allRecons[state.currentMonthCode];
+  if (!recon || recon.status!=='open') { showToast("Current month not open.", true); return; }
+  const comp = computeRecon(recon.rows, recon.tolerance_pct);
+  if (!comp.hasAnyForecast) { showToast("No forecasts entered.", true); return; }
+  if (!comp.hasFull) { showToast(comp.missing.length + " in-scope SKU(s) need actuals.", true); return; }
+  try {
+    const refNumber = await runTransaction(db, async tx => {
+      // ===== ALL READS FIRST (Firestore requires reads before writes) =====
+      const nmCode = nextMC(recon.monthCode);
+      const nmDoc = await tx.get(doc(db,'reconciliations',nmCode));
+      let shouldRoll = true;
+      if (nmDoc.exists()) {
+        const ex = nmDoc.data();
+        if (ex.rows && ex.rows.some(r => Number(r.forecast)>0)) shouldRoll = false;
+      }
+
+      // ===== Build reference (purely a closed-month identifier, not a settlement number) =====
+      const ref = 'CLOSED/' + recon.monthCode;
+
+      // ===== ALL WRITES AFTER ALL READS =====
+      // Build close payload defensively — never let undefined values into Firestore
+      const closedDoc = {
+        month: recon.month || monthCodeName(recon.monthCode),
+        monthCode: recon.monthCode,
+        status: 'closed',
+        tolerance_pct: Number(recon.tolerance_pct) || 5,
+        rows: recon.rows || [],
+        createdAt: recon.createdAt || new Date().toISOString(),
+        createdBy: recon.createdBy || state.userProfile.name,
+        closedAt: new Date().toISOString(),
+        closedBy: state.userProfile.name,
+        closedByUid: state.currentUser.uid,
+        refNumber: ref,
+        totals: {
+          forecast: Number(comp.totalFC) || 0,
+          actual: comp.totalAct == null ? 0 : Number(comp.totalAct),
+          tierFC: comp.tierFC ? Number(comp.tierFC.rate) || 0 : 0,
+          tierAct: comp.tierAct ? Number(comp.tierAct.rate) || 0 : 0,
+          variance: comp.variance == null ? 0 : Number(comp.variance),
+          tierShifted: !!comp.tierShifted,
+          inScopeCount: comp.inScope.length,
+          outOfScopeCount: comp.outOfScope.length
+        }
+      };
+      // Preserve rolledFrom if present (audit trail)
+      if (recon.rolledFrom) closedDoc.rolledFrom = recon.rolledFrom;
+      tx.set(doc(db,'reconciliations',recon.monthCode), closedDoc);
+      tx.set(doc(db,'change_log','close_'+recon.monthCode+'_'+Date.now()), {
+        ts: new Date().toISOString(), user: state.userProfile.name, uid: state.currentUser.uid, role: state.realRole,
+        entity: 'Month Close', action: 'Closed ' + (recon.month || recon.monthCode), before: 'open', after: 'closed',
+        reason: comp.tierShifted ? `Tier shifted from ₹${comp.tierFC.rate} to ₹${comp.tierAct.rate}/unit` : 'Volume within tier — no rate change',
+        monthCode: recon.monthCode, variance_pct: Number(comp.variance) || 0
+      });
+      if (shouldRoll) {
+        tx.set(doc(db,'reconciliations',nmCode), {
+          month: monthCodeName(nmCode), monthCode: nmCode, status: 'open', tolerance_pct: recon.tolerance_pct,
+          rows: state.skus.map(s => {
+            const prev = recon.rows.find(r => r.sno===s.sno);
+            const wasInScope = prev && (Number(prev.forecast)>0 || (prev.actual!==null && prev.actual!==undefined && prev.actual!==''));
+            return { sno: s.sno, name: s.name, mini: isMini(s.name), forecast: wasInScope ? (Number(prev.actual)||0) : 0, actual: null };
+          }),
+          createdAt: new Date().toISOString(), createdBy: state.userProfile.name, rolledFrom: recon.monthCode
+        });
+      }
+      return ref;
+    });
+    await loadAllReconciliations();
+    state.viewingMonthCode = state.currentMonthCode;
+    state.modal = null; renderModal();
+    render();
+    showToast(`Closed ${recon.month}.`);
+  } catch (err) { console.error(err); showToast("Close failed: " + err.message, true); }
+}
+
+async function reopenMonth(mc) {
+  const h = state.allRecons[mc];
+  if (!h || h.status!=='closed') { showToast("Month not closed.", true); return; }
+  if (daysSince(h.closedAt) > REOPEN_WINDOW_DAYS) { showToast("Beyond " + REOPEN_WINDOW_DAYS + "-day window.", true); return; }
+  try {
+    const batch = writeBatch(db);
+    batch.set(doc(db,'reconciliations',mc), {
+      month: h.month, monthCode: h.monthCode, status:'open', tolerance_pct: h.tolerance_pct, rows: h.rows,
+      createdAt: h.createdAt, createdBy: h.createdBy,
+      reopenedAt: new Date().toISOString(), reopenedBy: state.userProfile.name,
+      previous_close: { refNumber: h.refNumber, closedAt: h.closedAt, closedBy: h.closedBy, settlement: h.settlement, totals: h.totals }
+    });
+    batch.set(doc(db,'change_log','reopen_'+mc+'_'+Date.now()), {
+      ts: new Date().toISOString(), user: state.userProfile.name, uid: state.currentUser.uid, role: state.realRole,
+      entity: 'Month Reopen', action: 'Reopened ' + h.month, before: 'closed · ' + h.refNumber, after: 'open',
+      reason: 'Admin correction. Original ' + h.refNumber + ' superseded.', monthCode: mc
+    });
+    await batch.commit();
+    await loadAllReconciliations();
+    state.viewingMonthCode = mc;
+    state.modal = null; renderModal();
+    render();
+    showToast(`${h.month} reopened.`);
+  } catch (err) { console.error(err); showToast("Reopen failed: " + err.message, true); }
+}
+
+// CHUNK 2 NEW: Copy from previous month
+function copyFromPrevious() {
+  const recon = viewingRecon();
+  if (!recon) return;
+  const prevCode = prevMC(state.viewingMonthCode);
+  const prev = state.allRecons[prevCode];
+  if (!prev) {
+    showToast("No previous month data exists for " + monthCodeName(prevCode) + ".", true);
+    return;
+  }
+  // For each row in current, copy forecast from prev (use prev's actual if closed, else prev's forecast)
+  const isPrevClosed = prev.status === 'closed';
+  let copied = 0;
+  recon.rows.forEach(r => {
+    const prevRow = prev.rows.find(p => p.sno === r.sno);
+    if (!prevRow) return;
+    const sourceVal = isPrevClosed ? Number(prevRow.actual) || 0 : Number(prevRow.forecast) || 0;
+    if (sourceVal > 0) copied++;
+    r.forecast = sourceVal;
+  });
+  state.allRecons[state.viewingMonthCode] = recon;
+  renderReconFull();
+  scheduleReconSave();
+  showToast(`Copied ${copied} forecast value(s) from ${prev.month}'s ${isPrevClosed ? 'actuals' : 'forecasts'}.`);
+}
+
+function render() { renderHeader(); renderNav(); renderTab(); }
+function effectiveRole() { return state.realRole==='admin' ? state.previewRole : state.realRole; }
+
+function renderHeader() {
+  const isP = effectiveRole()==='viewer-pilgrim';
+  document.getElementById('view-pill').textContent = isP ? 'Stakeholder' : 'Master';
+  const wrap = document.getElementById('role-switcher-wrap');
+  if (state.realRole==='admin') {
+    wrap.style.display = 'flex';
+    document.getElementById('role-switcher').innerHTML = [{id:'admin',label:'Admin'},{id:'editor',label:'Editor'},{id:'viewer-aphl',label:'APHL view'},{id:'viewer-pilgrim',label:'Pilgrim view'}].map(r => `<button class="role-btn ${state.previewRole===r.id?'active':''}" onclick="setPreviewRole('${r.id}')">${r.label}</button>`).join('');
+  } else { wrap.style.display = 'none'; }
+}
+
+function renderNav() {
+  const isP = effectiveRole()==='viewer-pilgrim';
+  const isAdmin = state.realRole==='admin' && state.previewRole==='admin';
+  const isEditor = effectiveRole()==='editor';
+  const isAphlV = effectiveRole()==='viewer-aphl';
+  // Scenarios tab visible to admin and editor (Aelius internal), hidden from Pilgrim and APHL viewers
+  const showScenarios = isAdmin || isEditor;
+  const pendingCount = pendingProposalsCount();
+  const apvLabel = pendingCount > 0 ? `Approvals <span style="background:#d4664e;color:#0a0e13;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;margin-left:4px">${pendingCount}</span>` : 'Approvals';
+  // My Proposals badge for editors (count of own pending)
+  const myPending = isEditor ? state.proposals.filter(p => p.proposer_uid === state.currentUser?.uid && p.status === 'pending').length : 0;
+  const myLabel = myPending > 0 ? `My Proposals <span style="background:#e6b447;color:#0a0e13;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;margin-left:4px">${myPending}</span>` : 'My Proposals';
+  const tabs = [
+    {id:'dashboard',label:'Dashboard'},
+    {id:'rm',label:'RM Pricing'},
+    {id:'scenarios',label:'Scenarios',h:!showScenarios},
+    {id:'purchases',label:'Purchase History',h:!showScenarios},
+    {id:'reconciliation',label:'Reconciliation'},
+    {id:'history',label:'Settlement History'},
+    {id:'approvals',label:apvLabel,h:!isAdmin},
+    {id:'myproposals',label:myLabel,h:!isEditor},
+    {id:'changelog',label:'Change Log'}
+  ].filter(t => !t.h);
+  if (!tabs.find(t => t.id===state.tab)) state.tab = 'dashboard';
+  document.getElementById('nav').innerHTML = tabs.map(t => `<button class="tab ${state.tab===t.id?'active':''}" onclick="setTab('${t.id}')">${t.label}</button>`).join('');
+}
+
+function renderTab() {
+  const m = document.getElementById('main');
+  if (!state.loaded) { m.innerHTML = '<div class="placeholder"><h3>Loading…</h3></div>'; return; }
+  if (state.tab==='dashboard') m.innerHTML = renderDashboard();
+  else if (state.tab==='rm') m.innerHTML = renderRM();
+  else if (state.tab==='reconciliation') renderReconFull();
+  else if (state.tab==='history') m.innerHTML = renderHistory();
+  else if (state.tab==='changelog') m.innerHTML = renderChangeLog();
+  else if (state.tab==='approvals') m.innerHTML = renderApprovals();
+  else if (state.tab==='myproposals') m.innerHTML = renderMyProposals();
+  else if (state.tab==='scenarios') m.innerHTML = renderScenarios();
+  else if (state.tab==='purchases') renderPurchaseHistory();
+  else m.innerHTML = `<div class="placeholder"><h3>Coming soon</h3></div>`;
+}
+
+function renderApprovals() {
+  const all = state.proposals || [];
+  const filter = state.proposalsFilter || 'pending';
+  const filtered = filter === 'all' ? all : all.filter(p => p.status === filter);
+  const counts = {
+    pending: all.filter(p => p.status === 'pending').length,
+    approved: all.filter(p => p.status === 'approved').length,
+    rejected: all.filter(p => p.status === 'rejected').length,
+    all: all.length
+  };
+
+  const filterPills = ['pending', 'approved', 'rejected', 'all'].map(f => {
+    const active = filter === f;
+    const label = f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1);
+    return `<button class="btn ${active?'btn-primary':''}" style="padding:4px 12px;font-size:11px" onclick="setProposalsFilter('${f}')">${label} <span style="opacity:0.7">·${counts[f]}</span></button>`;
+  }).join('');
+
+  const head = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Approvals</div>
+        <div class="section-sub">Change requests from Aelius editors · ${counts.pending} pending</div>
+      </div>
+    </div>
+    <div class="control-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:14px">${filterPills}</div>
+  `;
+
+  if (all.length === 0) {
+    return head + `<div class="placeholder"><h3>No proposals yet</h3><p>When Aelius editors propose changes, they'll appear here for your approval.</p></div>`;
+  }
+
+  if (filtered.length === 0) {
+    return head + `<div class="placeholder"><h3>No ${filter} proposals</h3></div>`;
+  }
+
+  const entityColor = (e) => {
+    if (e === 'rm_edit') return '#d4a574';
+    if (e === 'rm_add') return '#7fb069';
+    if (e === 'pm_edit') return '#85b7eb';
+    if (e === 'fixed_cc_edit') return '#85b7eb';
+    if (e === 'sku_status') return '#e6b447';
+    return '#8a95a3';
+  };
+  const entityLabel = (e) => ({rm_edit:'RM Edit', rm_add:'RM Add', pm_edit:'PM Edit', fixed_cc_edit:'Fixed CC', sku_status:'SKU Status'}[e] || e);
+  const statusColor = (s) => ({pending:'#e6b447', approved:'#7fb069', rejected:'#d4664e'}[s] || '#8a95a3');
+
+  const rows = filtered.map(p => {
+    const dt = p.ts ? new Date(p.ts) : null;
+    const dtValid = dt && !isNaN(dt.getTime());
+    const dateStr = dtValid ? dt.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'2-digit'}) : '—';
+    const timeStr = dtValid ? dt.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '';
+    const isPending = p.status === 'pending';
+    const actionBtns = isPending
+      ? `<button class="btn btn-primary" style="padding:4px 10px;font-size:11px;margin-right:4px" onclick="approveProposal('${p.id}')">Approve</button>
+         <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="openRejectProposalModal('${p.id}')">Reject</button>`
+      : `<span style="font-size:11px;color:#5b6775">${p.decided_by||'—'} on ${p.decided_at ? new Date(p.decided_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—'}</span>`;
+    const decisionReasonRow = (!isPending && p.decision_reason) ? `<tr style="background:#0a0e13"><td colspan="8" style="padding:6px 12px;font-size:11px;color:#8a95a3"><strong style="color:#e8ecf0">Decision note:</strong> ${p.decision_reason}</td></tr>` : '';
+    return `<tr style="${isPending?'':'opacity:0.6'}">
+      <td style="color:#8a95a3;font-size:11px;white-space:nowrap"><div style="color:#e8ecf0">${dateStr}</div><div style="color:#5b6775">${timeStr}</div></td>
+      <td><span class="pill" style="background:#161e26;color:${entityColor(p.entity)};border:1px solid #1f2a35">${entityLabel(p.entity)}</span></td>
+      <td class="left" style="color:#e8ecf0;max-width:240px">${p.target_label||'—'}</td>
+      <td class="left" style="color:#5b6775;font-size:11px;font-family:'SF Mono',Menlo,monospace" title="${(p.before_summary||'').replace(/"/g,'&quot;')}">${p.before_summary||'—'}</td>
+      <td class="left" style="color:#7fb069;font-size:11px;font-family:'SF Mono',Menlo,monospace" title="${(p.after_summary||'').replace(/"/g,'&quot;')}">${p.after_summary||'—'}</td>
+      <td class="left" style="color:#8a95a3;font-size:12px;max-width:280px">${p.reason||'—'}</td>
+      <td class="left" style="color:#8a95a3;font-size:11px;white-space:nowrap"><div>${p.proposer_name||'—'}</div><div style="color:#5b6775;font-size:10px">${p.proposer_role||''}</div></td>
+      <td class="left"><span class="pill" style="background:${statusColor(p.status)}22;color:${statusColor(p.status)};margin-bottom:4px;display:inline-block">${(p.status||'').toUpperCase()}</span><br>${actionBtns}</td>
+    </tr>${decisionReasonRow}`;
+  }).join('');
+
+  return head + `<div class="table-wrap"><table>
+    <thead><tr>
+      <th class="left" style="width:90px">When</th>
+      <th class="left" style="width:100px">Type</th>
+      <th class="left">Target</th>
+      <th class="left">Before</th>
+      <th class="left">After</th>
+      <th class="left">Reason</th>
+      <th class="left" style="width:130px">Proposer</th>
+      <th class="left" style="width:200px">Status</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="footer-note">Approving applies the change live and writes a change_log entry. Rejecting requires a reason and closes the proposal. Decisions are final — proposers can resubmit if needed.</div>`;
+}
+
+function renderMyProposals() {
+  const myUid = state.currentUser?.uid;
+  if (!myUid) return `<div class="placeholder"><h3>Not signed in</h3></div>`;
+  const all = (state.proposals || []).filter(p => p.proposer_uid === myUid);
+  const filter = state.proposalsFilter || 'pending';
+  const filtered = filter === 'all' ? all : all.filter(p => p.status === filter);
+  const counts = {
+    pending: all.filter(p => p.status === 'pending').length,
+    approved: all.filter(p => p.status === 'approved').length,
+    rejected: all.filter(p => p.status === 'rejected').length,
+    all: all.length
+  };
+
+  const filterPills = ['pending', 'approved', 'rejected', 'all'].map(f => {
+    const active = filter === f;
+    const label = f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1);
+    return `<button class="btn ${active?'btn-primary':''}" style="padding:4px 12px;font-size:11px" onclick="setProposalsFilter('${f}')">${label} <span style="opacity:0.7">·${counts[f]}</span></button>`;
+  }).join('');
+
+  const head = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">My Proposals</div>
+        <div class="section-sub">Your change requests · ${counts.pending} pending · ${counts.approved} approved · ${counts.rejected} rejected</div>
+      </div>
+    </div>
+    <div class="control-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:14px">${filterPills}</div>
+  `;
+
+  if (all.length === 0) {
+    return head + `<div class="placeholder"><h3>You haven't submitted any proposals yet</h3><p style="margin-top:8px">When you click "Propose" on RM rates, PM costs, or SKU status changes, your submissions will appear here. Admin reviews and approves or rejects each one.</p></div>`;
+  }
+
+  if (filtered.length === 0) {
+    return head + `<div class="placeholder"><h3>No ${filter} proposals</h3></div>`;
+  }
+
+  const entityColor = (e) => {
+    if (e === 'rm_edit') return '#d4a574';
+    if (e === 'rm_add') return '#7fb069';
+    if (e === 'pm_edit') return '#85b7eb';
+    if (e === 'fixed_cc_edit') return '#85b7eb';
+    if (e === 'sku_status') return '#e6b447';
+    return '#8a95a3';
+  };
+  const entityLabel = (e) => ({rm_edit:'RM Edit', rm_add:'RM Add', pm_edit:'PM Edit', fixed_cc_edit:'Fixed CC', sku_status:'SKU Status'}[e] || e);
+  const statusColor = (s) => ({pending:'#e6b447', approved:'#7fb069', rejected:'#d4664e'}[s] || '#8a95a3');
+
+  const rows = filtered.map(p => {
+    const dt = p.ts ? new Date(p.ts) : null;
+    const dtValid = dt && !isNaN(dt.getTime());
+    const dateStr = dtValid ? dt.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'2-digit'}) : '—';
+    const timeStr = dtValid ? dt.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '';
+
+    let decisionInfo = '<span style="color:#5b6775">—</span>';
+    if (p.status === 'approved') {
+      const decDt = p.decided_at ? new Date(p.decided_at) : null;
+      const decStr = decDt && !isNaN(decDt.getTime()) ? decDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—';
+      decisionInfo = `<div style="color:#7fb069">Approved ${decStr}</div><div style="color:#5b6775;font-size:10px">by ${p.decided_by||'—'}</div>`;
+    } else if (p.status === 'rejected') {
+      const decDt = p.decided_at ? new Date(p.decided_at) : null;
+      const decStr = decDt && !isNaN(decDt.getTime()) ? decDt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '—';
+      decisionInfo = `<div style="color:#d4664e">Rejected ${decStr}</div><div style="color:#5b6775;font-size:10px">by ${p.decided_by||'—'}</div>`;
+    } else {
+      // pending
+      decisionInfo = `<div style="color:#e6b447">Awaiting review</div>`;
+    }
+
+    const decisionReasonRow = (p.status === 'rejected' && p.decision_reason) ? `<tr style="background:#0a0e13"><td colspan="7" style="padding:6px 12px;font-size:11px;color:#d4664e"><strong>Rejection reason:</strong> ${p.decision_reason}</td></tr>` : '';
+
+    return `<tr>
+      <td style="color:#8a95a3;font-size:11px;white-space:nowrap"><div style="color:#e8ecf0">${dateStr}</div><div style="color:#5b6775">${timeStr}</div></td>
+      <td><span class="pill" style="background:#161e26;color:${entityColor(p.entity)};border:1px solid #1f2a35">${entityLabel(p.entity)}</span></td>
+      <td class="left" style="color:#e8ecf0;max-width:240px">${p.target_label||'—'}</td>
+      <td class="left" style="color:#5b6775;font-size:11px;font-family:'SF Mono',Menlo,monospace">${p.before_summary||'—'}</td>
+      <td class="left" style="color:#7fb069;font-size:11px;font-family:'SF Mono',Menlo,monospace">${p.after_summary||'—'}</td>
+      <td class="left" style="color:#8a95a3;font-size:12px;max-width:280px">${p.reason||'—'}</td>
+      <td class="left"><span class="pill" style="background:${statusColor(p.status)}22;color:${statusColor(p.status)};margin-bottom:4px;display:inline-block">${(p.status||'').toUpperCase()}</span><br><span style="font-size:11px">${decisionInfo}</span></td>
+    </tr>${decisionReasonRow}`;
+  }).join('');
+
+  return head + `<div class="table-wrap"><table>
+    <thead><tr>
+      <th class="left" style="width:90px">Submitted</th>
+      <th class="left" style="width:100px">Type</th>
+      <th class="left">Target</th>
+      <th class="left">Before</th>
+      <th class="left">After</th>
+      <th class="left">Your reason</th>
+      <th class="left" style="width:160px">Status</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>
+  <div class="footer-note">Pending proposals are awaiting admin review. Rejected proposals can be resubmitted via the original Edit/Propose flow with revised rationale.</div>`;
+}
+
+// === SCENARIO ENGINE ===
+// For a given RM (by id) and delta % change, compute the impact on every SKU.
+// Returns: { changedRm, scenarioRate, currentRate, perSku: [...{sno, name, status, currentTotal, scenarioTotal, delta, deltaPct, hardcoded, unaffected, monthlyVol, monthlyDelta, quarterlyDelta}], summary: {affected, avgPct, maxPct, maxSku, totalDelta, totalMonthlyDelta, totalQuarterlyDelta, skusWithVol} }
+function runScenario(rmId, deltaPct) {
+  const rm = state.rms.find(r => r.id === rmId);
+  if (!rm) return null;
+  const s = state.settings || {};
+  const currentRate = Number(rm.rate) || 0;
+  const scenarioRate = currentRate * (1 + deltaPct / 100);
+
+  // Build current and scenario rate lookups
+  const currentLookup = {};
+  state.rms.forEach(r => { if (r.name) currentLookup[String(r.name).trim().toLowerCase()] = Number(r.rate) || 0; });
+  const scenLookup = { ...currentLookup };
+  scenLookup[String(rm.name).trim().toLowerCase()] = scenarioRate;
+
+  // Helper: compute rm_cost_kg from formulation × given rate lookup
+  const rmCostFromFormulation = (formulation, lookup) => {
+    let cost = 0;
+    formulation.ingredients.forEach(ing => {
+      const trade = String(ing.trade || '').trim().toLowerCase();
+      const rate = lookup[trade] != null ? lookup[trade] : (ing.hardcoded_rate != null ? Number(ing.hardcoded_rate) : 0);
+      cost += (Number(ing.qty_pct) / 100) * rate;
+    });
+    return cost;
+  };
+
+  // Helper: average monthly volume from recent 6 months (or however many available)
+  const avgMonthlyVolume = (sno) => {
+    const series = getHistorySeries(sno);
+    if (series.length === 0) return null;
+    const recent = series.slice(-6); // last 6 months or fewer
+    const total = recent.reduce((a, b) => a + Number(b.units || 0), 0);
+    return Math.round(total / recent.length);
+  };
+
+  // For each SKU: compute current and scenario totals BOTH from formulation
+  // This gives apples-to-apples comparison. The SKU's stored rm_cost_kg_base
+  // is a cached snapshot and may differ from formulation-derived cost.
+  const perSku = state.skus.map(sku => {
+    const formulation = state.formulations[String(sku.sno)] || state.formulations[sku.sno];
+    const isInactive = sku.status === 'inactive';
+    const isKorean = sku.sno >= 18 && sku.sno <= 27;
+    const monthlyVol = avgMonthlyVolume(sku.sno);
+
+    // Korean SKUs: hardcoded rm_cost_kg_base, no formulation — flag as unmodeled
+    if (isKorean || !formulation || !formulation.ingredients || formulation.ingredients.length === 0) {
+      const storedCalc = calcSKU(sku, s);
+      return {
+        sno: sku.sno, name: sku.name, status: sku.status || 'active', isInactive,
+        currentTotal: storedCalc.exf, scenarioTotal: storedCalc.exf, delta: 0, deltaPct: 0,
+        hardcoded: isKorean, unaffected: !isKorean,
+        usesThisRm: false,
+        monthlyVol, monthlyDelta: 0, quarterlyDelta: 0
+      };
+    }
+
+    // Check if this SKU's formulation actually uses the changed RM
+    const targetRmName = String(rm.name).trim().toLowerCase();
+    const usesThisRm = formulation.ingredients.some(ing => String(ing.trade||'').trim().toLowerCase() === targetRmName);
+
+    if (!usesThisRm) {
+      const storedCalc = calcSKU(sku, s);
+      return {
+        sno: sku.sno, name: sku.name, status: sku.status || 'active', isInactive,
+        currentTotal: storedCalc.exf, scenarioTotal: storedCalc.exf, delta: 0, deltaPct: 0,
+        hardcoded: false, unaffected: true, usesThisRm: false,
+        monthlyVol, monthlyDelta: 0, quarterlyDelta: 0
+      };
+    }
+
+    // BOTH current and scenario computed from formulation × respective rates
+    const currentRmKg = rmCostFromFormulation(formulation, currentLookup);
+    const scenRmKg = rmCostFromFormulation(formulation, scenLookup);
+
+    const currentSku = { ...sku, rm_cost_kg_base: currentRmKg };
+    const scenSku = { ...sku, rm_cost_kg_base: scenRmKg };
+    const currentCalc = calcSKU(currentSku, s);
+    const scenCalc = calcSKU(scenSku, s);
+    const currentTotal = currentCalc.exf;
+    const scenarioTotal = scenCalc.exf;
+    const delta = scenarioTotal - currentTotal;
+    const deltaPct = currentTotal > 0 ? (delta / currentTotal) * 100 : 0;
+    const monthlyDelta = monthlyVol != null ? delta * monthlyVol : null;
+    const quarterlyDelta = monthlyDelta != null ? monthlyDelta * 3 : null;
+
+    return {
+      sno: sku.sno, name: sku.name, status: sku.status || 'active', isInactive,
+      currentTotal, scenarioTotal, delta, deltaPct,
+      hardcoded: false, unaffected: false, usesThisRm: true,
+      monthlyVol, monthlyDelta, quarterlyDelta
+    };
+  });
+
+  // Summary stats — only across SKUs that are actually affected (uses the RM and active)
+  const affectedRows = perSku.filter(r => r.usesThisRm && !r.isInactive);
+  const affected = affectedRows.length;
+  const avgPct = affected > 0 ? affectedRows.reduce((a,b) => a + b.deltaPct, 0) / affected : 0;
+  let maxRow = null;
+  affectedRows.forEach(r => { if (!maxRow || Math.abs(r.deltaPct) > Math.abs(maxRow.deltaPct)) maxRow = r; });
+  const totalDelta = affectedRows.reduce((a,b) => a + b.delta, 0);
+
+  // Volume-weighted totals (only sums where monthlyVol is available)
+  const rowsWithVol = affectedRows.filter(r => r.monthlyVol != null);
+  const skusWithVol = rowsWithVol.length;
+  const totalMonthlyDelta = rowsWithVol.reduce((a,b) => a + b.monthlyDelta, 0);
+  const totalQuarterlyDelta = totalMonthlyDelta * 3;
+
+  return {
+    changedRm: rm,
+    currentRate, scenarioRate,
+    deltaPct,
+    perSku,
+    summary: { affected, avgPct, maxPct: maxRow?.deltaPct || 0, maxSku: maxRow, totalDelta, totalMonthlyDelta, totalQuarterlyDelta, skusWithVol }
+  };
+}
+
+function renderScenarios() {
+  const scen = state.scenario;
+  const presets = [-20, -10, -5, 5, 10, 15, 20];
+
+  // RM dropdown options — sorted by name
+  const rmOpts = [...state.rms].sort((a,b) => (a.name||'').localeCompare(b.name||''))
+    .map(r => `<option value="${r.id}" ${scen.rmId===r.id?'selected':''}>${r.name} · ₹${fmt(r.rate, 0)}/kg</option>`).join('');
+
+  const presetBtns = presets.map(p => {
+    const active = scen.deltaPct === p;
+    const sign = p > 0 ? '+' : '';
+    const color = p > 0 ? '#d4664e' : '#7fb069';
+    return `<button class="btn ${active?'btn-primary':''}" style="padding:6px 12px;font-size:12px;color:${active?'':color}" onclick="setScenarioDelta(${p})">${sign}${p}%</button>`;
+  }).join('');
+
+  const customActive = scen.customPct !== '' && Number(scen.customPct) === scen.deltaPct;
+
+  // Selected RM info
+  let rmInfo = '';
+  if (scen.rmId) {
+    const rm = state.rms.find(r => r.id === scen.rmId);
+    if (rm && scen.deltaPct != null) {
+      const newRate = Number(rm.rate) * (1 + scen.deltaPct / 100);
+      const sign = scen.deltaPct > 0 ? '+' : '';
+      rmInfo = `<div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 18px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="color:#8a95a3;font-size:11px;text-transform:uppercase;letter-spacing:0.1em">Scenario rate</div>
+          <div style="color:#e8ecf0;font-size:18px;font-weight:600;margin-top:4px">${rm.name}</div>
+          <div style="color:#5b6775;font-size:12px;margin-top:2px">₹${fmt(rm.rate,0)} <span style="color:${scen.deltaPct>0?'#d4664e':'#7fb069'}">${sign}${scen.deltaPct}%</span> → <span style="color:#d4a574;font-weight:600">₹${fmt(newRate,0)}/kg</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="executeScenario()" style="padding:8px 18px">Run scenario</button>
+      </div>`;
+    }
+  }
+
+  // Build the interactive controls
+  const controls = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Scenarios</div>
+        <div class="section-sub">Stress-test cost impact of RM rate changes · internal use, not visible to Pilgrim</div>
+      </div>
+    </div>
+    <div style="background:#161e26;border:1px solid #1f2a35;border-radius:6px;padding:18px;margin-bottom:18px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:end">
+        <div>
+          <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Pick a raw material</label>
+          <select id="scen-rm" onchange="setScenarioRm(this.value)" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:10px 12px;border-radius:4px;font-family:inherit;font-size:13px">
+            <option value="">— Select an RM —</option>
+            ${rmOpts}
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Apply % change</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+            ${presetBtns}
+            <input type="number" id="scen-custom" placeholder="Custom" value="${scen.customPct||''}" oninput="setScenarioCustom(this.value)" style="width:90px;background:#0a0e13;border:1px solid ${customActive?'#d4a574':'#1f2a35'};color:#e8ecf0;padding:6px 10px;border-radius:4px;font-family:inherit;font-size:12px;margin-left:6px">
+            <span style="color:#5b6775;font-size:12px">%</span>
+          </div>
+        </div>
+      </div>
+      ${rmInfo}
+    </div>
+  `;
+
+  // Result section
+  let resultSection = '';
+  if (scen.result) {
+    const r = scen.result;
+    const sum = r.summary;
+    const sign = r.deltaPct > 0 ? '+' : '';
+
+    // Summary stats
+    // Format helper for large rupee amounts (lakhs/crores)
+    const fmtLargeINR = (v) => {
+      const a = Math.abs(v);
+      const sign = v < 0 ? '-' : (v > 0 ? '+' : '');
+      if (a >= 10000000) return sign + '₹' + fmt(a/10000000, 2) + ' Cr';
+      if (a >= 100000) return sign + '₹' + fmt(a/100000, 2) + ' L';
+      if (a >= 1000) return sign + '₹' + fmt(a/1000, 1) + 'K';
+      return sign + '₹' + fmt(a, 0);
+    };
+
+    const hasVolData = sum.skusWithVol > 0;
+    const quarterlyCard = hasVolData
+      ? `<div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Quarterly ₹ exposure</div>
+          <div style="color:${sum.totalQuarterlyDelta>0?'#d4664e':sum.totalQuarterlyDelta<0?'#7fb069':'#e8ecf0'};font-size:22px;font-weight:600;margin-top:4px">${fmtLargeINR(sum.totalQuarterlyDelta)}</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">at last 6mo avg vol · ${sum.skusWithVol} of ${sum.affected} SKUs</div>
+        </div>`
+      : `<div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Quarterly ₹ exposure</div>
+          <div style="color:#5b6775;font-size:14px;font-weight:600;margin-top:4px">No vol data</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">no historical demand for affected SKUs</div>
+        </div>`;
+
+    const summaryStats = `
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px">
+        <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">SKUs affected</div>
+          <div style="color:#e8ecf0;font-size:22px;font-weight:600;margin-top:4px">${sum.affected}</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">of ${state.skus.filter(s => s.status !== 'inactive').length} active</div>
+        </div>
+        <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Avg COGS impact</div>
+          <div style="color:${sum.avgPct>0?'#d4664e':sum.avgPct<0?'#7fb069':'#e8ecf0'};font-size:22px;font-weight:600;margin-top:4px">${sum.avgPct>0?'+':''}${fmt(sum.avgPct,2)}%</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">across affected SKUs</div>
+        </div>
+        <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Max impact</div>
+          <div style="color:${sum.maxPct>0?'#d4664e':sum.maxPct<0?'#7fb069':'#e8ecf0'};font-size:22px;font-weight:600;margin-top:4px">${sum.maxPct>0?'+':''}${fmt(sum.maxPct,2)}%</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">${sum.maxSku ? 'SKU '+sum.maxSku.sno+': '+(sum.maxSku.name||'').substring(0,18) : '—'}</div>
+        </div>
+        <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+          <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Δ/unit summed</div>
+          <div style="color:${sum.totalDelta>0?'#d4664e':sum.totalDelta<0?'#7fb069':'#e8ecf0'};font-size:22px;font-weight:600;margin-top:4px">${sum.totalDelta>0?'+':''}₹${fmt(sum.totalDelta,2)}</div>
+          <div style="color:#5b6775;font-size:10px;margin-top:2px">across SKUs</div>
+        </div>
+        ${quarterlyCard}
+      </div>
+    `;
+
+    // Sort: affected by impact desc, then unaffected, then hardcoded
+    const sorted = [...r.perSku].sort((a,b) => {
+      if (a.usesThisRm !== b.usesThisRm) return b.usesThisRm - a.usesThisRm;
+      if (a.unaffected !== b.unaffected) return a.unaffected - b.unaffected;
+      if (a.hardcoded !== b.hardcoded) return a.hardcoded - b.hardcoded;
+      return Math.abs(b.deltaPct) - Math.abs(a.deltaPct);
+    });
+
+    const tableRows = sorted.map(row => {
+      const inactiveStyle = row.isInactive ? 'opacity:0.5' : '';
+      let statusCell = '';
+      if (row.hardcoded) statusCell = `<span class="pill" style="background:#1f2a35;color:#5b6775;font-size:9px">HARDCODED · NOT MODELED</span>`;
+      else if (row.unaffected) statusCell = `<span style="color:#5b6775;font-size:11px">does not use this RM</span>`;
+      else if (row.isInactive) statusCell = `<span class="pill" style="background:#5b677522;color:#5b6775;font-size:9px">INACTIVE</span>`;
+      else statusCell = '';
+
+      const dColor = row.delta > 0 ? '#d4664e' : row.delta < 0 ? '#7fb069' : '#5b6775';
+      const dSign = row.delta > 0 ? '+' : '';
+
+      // Volume cell
+      const volCell = row.monthlyVol != null
+        ? `<td style="color:#8a95a3">${row.monthlyVol.toLocaleString('en-IN')}</td>`
+        : `<td style="color:#5b6775;font-size:10px">no data</td>`;
+
+      // Quarterly delta cell
+      const qDelta = row.quarterlyDelta;
+      const qSign = qDelta > 0 ? '+' : '';
+      const qCell = (row.usesThisRm && !row.hardcoded && qDelta != null && qDelta !== 0)
+        ? `<td style="color:${dColor};font-weight:600">${qSign}₹${fmt(qDelta, 0)}</td>`
+        : `<td style="color:#5b6775">—</td>`;
+
+      const valueCells = (row.usesThisRm && !row.hardcoded)
+        ? `<td style="color:#e8ecf0">₹${fmt(row.currentTotal,2)}</td>
+           <td style="color:#e8ecf0;font-weight:600">₹${fmt(row.scenarioTotal,2)}</td>
+           <td style="color:${dColor};font-weight:600">${dSign}₹${fmt(row.delta,2)}</td>
+           <td style="color:${dColor};font-weight:600">${dSign}${fmt(row.deltaPct,2)}%</td>`
+        : `<td style="color:#5b6775">₹${fmt(row.currentTotal,2)}</td>
+           <td style="color:#5b6775">—</td>
+           <td style="color:#5b6775">—</td>
+           <td style="color:#5b6775">—</td>`;
+
+      return `<tr style="${inactiveStyle}">
+        <td style="color:#5b6775">${row.sno}</td>
+        <td class="left" style="color:#e8ecf0">${(row.name||'').substring(0,40)}</td>
+        ${valueCells}
+        ${volCell}
+        ${qCell}
+        <td class="left">${statusCell}</td>
+      </tr>`;
+    }).join('');
+
+    resultSection = `
+      <div style="margin-top:24px">
+        <h3 style="font-size:13px;text-transform:uppercase;letter-spacing:0.1em;color:#8a95a3;margin-bottom:12px">Impact</h3>
+        ${summaryStats}
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th style="width:32px">#</th>
+            <th class="left">SKU</th>
+            <th>Current ex-fact</th>
+            <th>Scenario ex-fact</th>
+            <th>Δ ₹/unit</th>
+            <th>Δ %</th>
+            <th title="Avg monthly units from last 6 months of historical demand">Avg vol/mo</th>
+            <th title="Δ × monthly volume × 3 months">Quarterly Δ</th>
+            <th class="left" style="width:160px">Note</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table></div>
+        <div class="footer-note">Scenario uses formulation × rate for the new RM cost per kg, then applies your full cost cascade (freight, margin, wastage, utilities, GST). PM costs and Fixed CC are held constant. Volume = avg of last 6 months from historical demand. Quarterly Δ = Δ/unit × avg monthly volume × 3. Korean SKUs (18-27) have hardcoded rates and are not modeled here.</div>
+      </div>
+    `;
+  } else {
+    resultSection = `
+      <div class="placeholder" style="margin-top:18px">
+        <h3>Pick an RM and a % change to see impact</h3>
+        <p style="margin-top:8px;line-height:1.7">Choose any raw material from your chart, apply a percentage change (preset or custom), and click "Run scenario" to see how it cascades through every SKU's cost.<br><br>This is your stress-test sandbox — useful for "what if Argan Oil moves up 15%?" or "what if BTMS drops 5%?" conversations.</p>
+      </div>
+    `;
+  }
+
+  return controls + resultSection;
+}
+
+function renderDashboard() {
+  const isS = effectiveRole()==='viewer-pilgrim';
+  const s = state.settings || {};
+  const live = useLiveCalc();
+  const rows = state.skus.map(sku => {
+    let effectiveSku = sku;
+    let liveInfo = null;
+    if (live) {
+      liveInfo = liveRMCost(sku);
+      effectiveSku = { ...sku, rm_cost_kg_base: liveInfo.cost };
+    }
+    return { ...effectiveSku, calc: calcSKU(effectiveSku, s), _liveInfo: liveInfo, _cachedRMCost: sku.rm_cost_kg_base };
+  });
+  const q = state.searchQuery.toLowerCase();
+  const filt = q ? rows.filter(r => (r.name||'').toLowerCase().includes(q)) : rows;
+  const avgRM = filt.length ? filt.reduce((a,r) => a + (r.calc.rm_unit/r.calc.total*100), 0) / filt.length : 0;
+  const avgPM = filt.length ? filt.reduce((a,r) => a + (r.calc.pm_total/r.calc.total*100), 0) / filt.length : 0;
+  const skuRows = filt.map(r => {
+    const ex = state.expandedSku===r.sno;
+    const li = r._liveInfo;
+    const isIncomplete = li && li.unresolved && li.unresolved.length > 0;
+    const incompleteTooltip = isIncomplete ? li.unresolved.join('\n').replace(/"/g,'&quot;') : '';
+    const warnTag = isIncomplete ? ` <span class="pill" style="background:#3d2a0a;color:#e6b447;font-size:9px;cursor:help" title="Missing RMs:&#10;${incompleteTooltip}">⚠ ${li.unresolved.length}</span>` : '';
+    const isInactive = r.status === 'inactive';
+    const inactiveTag = isInactive ? ` <span class="pill" style="background:#1f0a0a;color:#d4664e;font-size:9px;letter-spacing:0.05em">INACTIVE</span>` : '';
+    const rowStyle = isInactive ? 'opacity:0.5' : '';
+    return `<tr class="dash-row ${ex?'expanded':''}" style="${rowStyle}" onclick="toggleExpand(${r.sno})">
+      <td style="color:#5b6775">${r.sno}</td><td class="left" style="color:#e8ecf0">${r.name}${warnTag}${inactiveTag}</td><td style="color:#8a95a3">${r.size}${r.unit}</td>
+      ${!isS?`<td>${fmt(r.rm_cost_kg_base)}</td><td style="color:#8a95a3">${fmt(r.calc.rm_w_f-r.rm_cost_kg_base)}</td><td style="color:#8a95a3">${fmt(r.calc.rm_margin)}</td><td style="color:#8a95a3">${fmt(r.calc.rm_wst)}</td>`:''}
+      <td>${fmt(r.calc.rm_unit_raw)}</td><td style="color:#d4a574;font-weight:600">${fmt(r.fixed_cc,0)}</td><td style="color:#e8ecf0;font-weight:600">${fmt(r.calc.rm_unit)}</td><td style="color:#e8ecf0;font-weight:600">${fmt(r.calc.pm_total)}</td><td style="color:#d4a574;font-weight:700">${fmt(r.calc.total)}</td><td style="color:#e8ecf0;font-weight:700">${fmtINR(r.calc.exf)}</td><td><span class="chevron">›</span></td>
+    </tr>${ex?renderSkuDetail(r,isS):''}`;
+  }).join('');
+  const cc = isS ? 10 : 14;
+  return `<div class="section-header"><div><div class="section-title">Cost Dashboard</div><div class="section-sub">${filt.length} of ${state.skus.length} SKUs · ${isS?'stakeholder':'master'}${live ? ` · <span style="color:#7fb069">live calc</span>${rows.filter(r=>r._liveInfo&&r._liveInfo.unresolved.length>0).length > 0 ? ` · <span style="color:#e6b447">${rows.filter(r=>r._liveInfo&&r._liveInfo.unresolved.length>0).length} incomplete</span>` : ''}` : ''}</div></div><div class="search-wrap"><span class="search-icon">⌕</span><input type="search" placeholder="Search…" value="${state.searchQuery}" oninput="updateSearch(this.value)"></div></div>
+  ${isS?'<div class="banner banner-info"><strong>Stakeholder view.</strong></div>':''}
+  <div class="stats-row">
+    <div class="stat"><div class="stat-label">Active SKUs</div><div class="stat-value">${filt.length}</div></div>
+    <div class="stat"><div class="stat-label">Avg ex-factory</div><div class="stat-value">${fmtINR(filt.length?filt.reduce((a,r)=>a+r.calc.exf,0)/filt.length:0)}</div></div>
+    <div class="stat"><div class="stat-label">RM share</div><div class="stat-value">${fmt(avgRM,1)}%</div></div>
+    <div class="stat"><div class="stat-label">PM share</div><div class="stat-value">${fmt(avgPM,1)}%</div></div>
+  </div>
+  <div class="table-wrap"><table><thead><tr><th style="width:32px">#</th><th class="left">SKU</th><th>Size</th>${!isS?'<th>RM ₹/kg</th><th>+Frt</th><th>+Mgn</th><th>+Wst</th>':''}<th>RM/unit</th><th>Fixed</th><th>RM Total</th><th>PM Total</th><th>Total</th><th>Ex-Factory</th><th></th></tr></thead><tbody>${skuRows||`<tr><td colspan="${cc}" style="text-align:center;color:#5b6775;padding:40px">No matches.</td></tr>`}</tbody></table></div>`;
+}
+function renderSkuDetail(r, isS) {
+  const c = r.calc;
+  const isAdmin = state.realRole === 'admin' && state.previewRole === 'admin';
+  const canE = canEdit();
+  const editLabel = isAdmin ? 'Edit' : 'Propose';
+  const isInactive = r.status === 'inactive';
+  const editFixedCcBtn = canE ? ` <button class="btn" style="padding:1px 6px;font-size:10px;margin-left:6px" onclick="event.stopPropagation();openEditFixedCcModal(${r.sno})">${editLabel}</button>` : '';
+  const toggleLabel = isInactive ? (isAdmin ? 'Activate SKU' : 'Propose activate') : (isAdmin ? 'Deactivate SKU' : 'Propose deactivate');
+  const toggleStatusBtn = canE ? `<button class="btn ${isInactive ? '' : 'btn-danger'}" style="padding:5px 12px;font-size:12px;margin-right:6px" onclick="event.stopPropagation();openToggleStatusModal(${r.sno})">${toggleLabel}</button>` : '';
+  const editPmBtn = canE ? `<button class="btn" style="padding:5px 12px;font-size:12px" onclick="event.stopPropagation();openEditPmModal(${r.sno})">${editLabel} PM costs</button>` : '';
+  const actionsBar = canE ? `<div style="margin-top:12px;text-align:right">${toggleStatusBtn}${editPmBtn}</div>` : '';
+  return `<tr class="detail-row"><td colspan="${isS?10:14}"><div class="detail-content">
+    <div class="detail-section"><h4>RM Waterfall</h4>
+    ${!isS?`<div class="line-row"><span class="label">Base RM ₹/kg</span><span class="val">${fmt(r.rm_cost_kg_base)}</span></div><div class="line-row muted"><span class="label">+ Freight (2%)</span><span class="val">${fmt(c.rm_w_f-r.rm_cost_kg_base)}</span></div><div class="line-row muted"><span class="label">+ Margin (10%)</span><span class="val">${fmt(c.rm_margin)}</span></div><div class="line-row muted"><span class="label">+ Wastage (2%)</span><span class="val">${fmt(c.rm_wst)}</span></div><div class="line-row muted"><span class="label">+ Utilities</span><span class="val">${fmt(state.settings.utilities_per_kg)}</span></div><div class="line-row bold"><span class="label">Final ₹/kg</span><span class="val">${fmt(c.rm_kg)}</span></div>`:''}
+    <div class="line-row"><span class="label">× size/1000</span><span class="val">${fmt(c.rm_unit_raw)}</span></div>
+    <div class="line-row muted"><span class="label">+ Fixed CC${editFixedCcBtn}</span><span class="val">${fmt(r.fixed_cc,0)}</span></div>
+    <div class="line-row bold"><span class="label">RM per Unit</span><span class="val">${fmt(c.rm_unit)}</span></div>
+    <div class="line-row accent"><span class="label">Total SKU</span><span class="val">${fmt(c.total)}</span></div>
+    <div class="line-row accent"><span class="label">Ex-Factory (incl GST)</span><span class="val">${fmtINR(c.exf)}</span></div></div>
+    <div class="detail-section"><h4>PM Breakdown</h4>
+    <div class="line-row"><span class="label">Jar/Bottle</span><span class="val">${fmt(r.jar_bottle)}</span></div>
+    <div class="line-row"><span class="label">Cap/Pump</span><span class="val">${fmt(r.cap_pump)}</span></div>
+    <div class="line-row"><span class="label">Label</span><span class="val">${fmt(r.label)}</span></div>
+    <div class="line-row"><span class="label">Monocarton</span><span class="val">${fmt(r.monocarton)}</span></div>
+    <div class="line-row"><span class="label">Shrink</span><span class="val">${fmt(r.shrink)}</span></div>
+    <div class="line-row muted"><span class="label">PM Handling</span><span class="val">${fmt(c.pm_h)}</span></div>
+    <div class="line-row muted"><span class="label">Freight-PM</span><span class="val">${fmt(r.freight_pm)}</span></div>
+    <div class="line-row muted"><span class="label">Freight-Label</span><span class="val">${fmt(r.freight_label)}</span></div>
+    <div class="line-row muted"><span class="label">Freight-Mono</span><span class="val">${fmt(r.freight_mono)}</span></div>
+    <div class="line-row"><span class="label">Outer Carton</span><span class="val">${fmt(r.outer_carton)}</span></div>
+    <div class="line-row"><span class="label">Ink</span><span class="val">${fmt(r.ink)}</span></div>
+    <div class="line-row bold"><span class="label">PM Total</span><span class="val">${fmt(c.pm_total)}</span></div>
+    ${actionsBar}</div>
+    <div class="detail-section" style="grid-column:1/-1;margin-top:14px">
+      <h4>Demand & Forecast</h4>
+      ${renderDemandChart(r.sno)}
+    </div>
+    </div></td></tr>`;
+}
+
+function renderRM() {
+  const isAdmin = state.realRole === 'admin' && state.previewRole === 'admin';
+  const canE = canEdit();
+  const isPilgrim = effectiveRole()==='viewer-pilgrim';
+  const showMake = !isPilgrim;
+  const showTrendLink = !isPilgrim; // Market trend link hidden from Pilgrim (sourcing research)
+  const q = state.searchQuery.toLowerCase();
+  const filt = q ? state.rms.filter(r => (r.name||'').toLowerCase().includes(q)||(showMake&&(r.make||'').toLowerCase().includes(q))||(r.inci||'').toLowerCase().includes(q)) : state.rms;
+  const editLabel = isAdmin ? 'Edit' : 'Propose';
+  const rows = filt.map(r => {
+    const d = r.old_rate && r.old_rate>0 && r.old_rate!==r.rate ? ((r.rate-r.old_rate)/r.old_rate*100) : null;
+    const dC = d===null ? '#5b6775' : d>0 ? '#d4664e' : '#7fb069';
+    const editBtn = canE ? `<button class="btn" style="padding:3px 8px;font-size:11px" onclick="openEditRMModal('${r.id}')">${editLabel}</button>` : '';
+    const makeCell = showMake ? `<td class="left" style="color:#8a95a3">${r.make||'—'}</td>` : '';
+    const trendLink = showTrendLink ? `<a href="https://www.google.com/search?q=${encodeURIComponent('"'+(r.name||'')+'" price trend India 2026')}" target="_blank" rel="noopener" style="color:#5b6775;text-decoration:none;margin-left:6px;font-size:10px" title="Search market trends for ${(r.name||'').replace(/"/g,'&quot;')}">↗</a>` : '';
+    return `<tr><td style="color:#5b6775">${r.sno}</td><td class="left" style="color:#e8ecf0">${r.name}</td>${makeCell}<td class="left" style="color:#5b6775;font-size:11px">${r.inci||'—'}</td><td style="color:#e8ecf0;font-weight:600">₹${fmt(r.rate,0)}${trendLink}</td><td style="color:#5b6775">${r.old_rate?'₹'+fmt(r.old_rate,0):'—'}</td><td style="color:${dC}">${d===null?'—':(d>0?'+':'')+fmt(d,1)+'%'}</td>${canE?`<td>${editBtn}</td>`:''}</tr>`;
+  }).join('');
+  const colCount = (showMake?7:6) + (canE?1:0);
+  const addBtn = canE ? `<button class="btn btn-primary" onclick="openAddRMModal()" style="margin-left:12px">+ ${isAdmin?'Add new RM':'Propose new RM'}</button>` : '';
+  const editorNote = (canE && !isAdmin) ? ' · proposals require admin approval' : (isAdmin ? ' · admin can edit' : '');
+  const trendNote = showTrendLink ? ' · ↗ opens market search' : '';
+  const subtitle = `${filt.length} of ${state.rms.length} materials${editorNote}${trendNote}${isPilgrim?' · vendor info masked':''}`;
+  const makeHeader = showMake ? '<th class="left">Make</th>' : '';
+  return `<div class="section-header"><div><div class="section-title">Raw Material Pricing</div><div class="section-sub">${subtitle}</div></div><div style="display:flex;gap:12px;align-items:center"><div class="search-wrap"><span class="search-icon">⌕</span><input type="search" value="${state.searchQuery}" oninput="updateSearch(this.value)"></div>${addBtn}</div></div><div class="table-wrap"><table><thead><tr><th style="width:32px">#</th><th class="left">Material</th>${makeHeader}<th class="left">INCI</th><th>Rate</th><th>Old</th><th>Δ</th>${canE?'<th></th>':''}</tr></thead><tbody>${rows||`<tr><td colspan="${colCount}" style="text-align:center;color:#5b6775;padding:40px">No matches.</td></tr>`}</tbody></table></div>`;
+}
+
+// Helper: count SKUs whose formulations reference a given RM trade name
+function countAffectedSKUs(tradeName) {
+  if (!tradeName) return { count: 0, skus: [] };
+  const target = String(tradeName).trim().toLowerCase();
+  const affected = [];
+  Object.values(state.formulations).forEach(f => {
+    if (!f.ingredients) return;
+    const matches = f.ingredients.some(ing => String(ing.trade||'').trim().toLowerCase() === target);
+    if (matches) affected.push({ sno: f.sno, name: f.name });
+  });
+  return { count: affected.length, skus: affected };
+}
+
+function renderReconFull() {
+  // CHUNK 2: ensure recon exists for any month we navigate to (creates blank in memory if needed)
+  if (state.viewingMonthCode) ensureReconExists(state.viewingMonthCode);
+  const recon = viewingRecon();
+  if (!recon) { document.getElementById('main').innerHTML = '<div class="placeholder"><h3>No data</h3></div>'; return; }
+
+  const role = effectiveRole();
+  const isAdmin = state.realRole==='admin' && role==='admin';
+  const canE = canEdit(); // admin or editor — both can do recon data entry
+  const isViewingCurrent = state.viewingMonthCode === state.currentMonthCode;
+  const isViewingFuture = state.viewingMonthCode.localeCompare(state.currentMonthCode) > 0;
+  const isViewingClosed = recon.status==='closed' || recon.status==='superseded';
+
+  // CHUNK 2 RULES (updated):
+  // - Closed/superseded → all read-only (everyone)
+  // - Forecast: editable by admin OR editor on any open month
+  // - Actual: editable by admin OR editor, but only for current month
+  // - Close month: admin ONLY (commits settlement, locks data)
+  // - Tolerance settings: admin ONLY (strategic, affects every dispute)
+  const canEditForecast = canE && !isViewingClosed;
+  const canEditActual = canE && isViewingCurrent && !isViewingClosed;
+  const canClose = isAdmin && isViewingCurrent && !isViewingClosed; // admin-only commit
+  const canEditTolerance = isAdmin && !isViewingClosed; // admin-only setting
+  const canCopyFromPrevious = canEditForecast;
+
+  const stripCodes = monthStripCodes();
+  const stripCards = stripCodes.map(c => {
+    const r = state.allRecons[c];
+    const isClosed = r && (r.status==='closed' || r.status==='superseded');
+    const isCur = c === state.currentMonthCode;
+    const isFut = c.localeCompare(state.currentMonthCode) > 0;
+    const isAct = c === state.viewingMonthCode;
+    const cls = `month-card ${isAct?'active':''} ${isClosed?'closed':isFut?'future':''}`;
+    let status = '', detail = '';
+    if (isClosed) { status = r.status==='superseded'?'Superseded':'Closed'; detail = r.refNumber || ''; }
+    else if (isCur) { const t = r ? r.rows.reduce((a,x) => a + (Number(x.forecast)||0), 0) : 0; status = '★ Current'; detail = t>0 ? fmt(t,0)+' fc' : 'no forecast'; }
+    else { const t = r ? r.rows.reduce((a,x) => a + (Number(x.forecast)||0), 0) : 0; status = 'Future'; detail = t>0 ? fmt(t,0)+' fc' : 'empty'; }
+    return `<button class="${cls}" onclick="setViewingMonth('${c}')"><div class="month-card-label">${monthCodeShort(c)}</div><div class="month-card-status">${status}</div><div class="month-card-detail">${detail}</div></button>`;
+  }).join('');
+
+  const comp = computeRecon(recon.rows, recon.tolerance_pct);
+
+  let banner = '';
+  if (isViewingClosed) {
+    const totals = recon.totals || {};
+    const tierMsg = totals.tierShifted
+      ? ` · Tier shifted ₹${totals.tierFC} → ₹${totals.tierAct}/unit`
+      : (totals.tierFC ? ` · Tier ₹${totals.tierFC}/unit (unchanged)` : '');
+    banner = `<div class="closed-banner"><strong>Month closed</strong> ${recon.closedAt ? 'on ' + new Date(recon.closedAt).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) + ' by ' + recon.closedBy : ''}.${tierMsg}</div>`;
+  } else if (isViewingFuture) {
+    // CHUNK 2: future month is now editable for forecasts
+    banner = `<div class="future-banner"><strong>Future month — forecast only.</strong> You're viewing ${recon.month}. Enter Pilgrim's projected forecasts here. Actuals are locked until this becomes the current month. Closing happens chronologically — close ${monthCodeName(state.currentMonthCode)} first.</div>`;
+  } else if (!comp.hasAnyForecast) {
+    banner = `<div class="banner banner-info"><strong>Forecast stage.</strong> Enter forecasts for SKUs that will ship.</div>`;
+  } else if (!comp.hasAny) {
+    banner = `<div class="banner banner-info"><strong>${fmt(comp.totalFC,0)} units across ${comp.inScope.length} SKUs.</strong> Tier: ₹${comp.tierFC.rate}/unit.</div>`;
+  } else if (!comp.hasFull) {
+    banner = `<div class="banner banner-warn"><strong>Partial actuals.</strong> ${comp.missing.length} blank.</div>`;
+  } else if (!comp.tierShifted) {
+    banner = `<div class="banner banner-good"><strong>Tier unchanged at ₹${comp.tierAct.rate}/unit.</strong> Volume variance ${comp.variance>0?'+':''}${comp.variance.toFixed(1)}% — same tier slab applies.</div>`;
+  } else if (comp.tierAct.rate < comp.tierFC.rate) {
+    banner = `<div class="banner banner-good"><strong>Tier shifted down ₹${comp.tierFC.rate} → ₹${comp.tierAct.rate}/unit.</strong> Volume +${comp.variance.toFixed(1)}% pushed into a higher slab — per-unit CC is lower.</div>`;
+  } else {
+    banner = `<div class="banner banner-warn"><strong>Tier shifted up ₹${comp.tierFC.rate} → ₹${comp.tierAct.rate}/unit.</strong> Volume ${comp.variance.toFixed(1)}% dropped to a lower slab — per-unit CC is higher.</div>`;
+  }
+
+  // Tier shift impact (purely informational — what the rate change means in rupees)
+  const tierShiftImpact = (comp.tierShifted && comp.totalAct)
+    ? (comp.tierAct.rate - comp.tierFC.rate) * comp.totalAct
+    : 0;
+
+  const stats = `<div class="stats-row">
+    <div class="stat"><div class="stat-label">Forecast units</div><div class="stat-value">${fmt(comp.totalFC,0)}</div><div class="stat-sub">${comp.inScope.length} in scope · ₹${comp.tierFC.rate}/unit</div></div>
+    <div class="stat"><div class="stat-label">Actual units</div><div class="stat-value">${comp.totalAct===null?'—':fmt(comp.totalAct,0)}</div><div class="stat-sub">${comp.tierAct?'₹'+comp.tierAct.rate+'/unit':isViewingFuture?'future':'pending'}</div></div>
+    <div class="stat"><div class="stat-label">Volume variance</div><div class="stat-value" style="color:${comp.variance===null?'#e8ecf0':'#e8ecf0'}">${comp.variance===null?'—':(comp.variance>0?'+':'')+comp.variance.toFixed(1)+'%'}</div><div class="stat-sub">informational</div></div>
+    <div class="stat"><div class="stat-label">Tier impact</div><div class="stat-value" style="color:${!comp.tierShifted?'#5b6775':tierShiftImpact<0?'#7fb069':'#e6b447'}">${!comp.tierShifted?'No shift':(tierShiftImpact<0?'-':'+')+'₹'+fmt(Math.abs(tierShiftImpact),0)}</div><div class="stat-sub">${!comp.tierShifted?'same tier':'CC rate × actual units'}</div></div>
+  </div>`;
+
+  // CHUNK 2: controls vary by current vs future
+  let controls = '';
+  if (canEditForecast) {
+    const monthClass = isViewingFuture ? 'future' : '';
+    const monthSuffix = isViewingFuture ? ' · FUTURE' : ' · CURRENT';
+    controls = `<div class="control-bar">
+      <span class="month-display ${monthClass}">${recon.month}${monthSuffix}</span>
+      <label class="filter-toggle"><input type="checkbox" ${state.hideOutOfScope?'checked':''} onchange="toggleHideOutOfScope()">Hide out-of-scope</label>
+      ${canEditActual ? `<label class="sort-toggle"><input type="checkbox" ${state.sortByAccuracy?'checked':''} onchange="toggleSort()">Sort by accuracy</label>` : ''}
+      <span id="save-indicator" class="save-indicator"></span>
+      <div class="spacer"></div>
+      ${canCopyFromPrevious ? `<button class="btn" onclick="copyFromPrev()" title="Copy forecasts from ${monthCodeName(prevMC(state.viewingMonthCode))}">Copy from previous</button>` : ''}
+      ${canEditActual ? `<button class="btn" onclick="simulateScenario('mixed')">Demo: mixed</button><button class="btn" onclick="simulateScenario('shortfall')">Demo: shortfall</button><button class="btn" onclick="resetActuals()">Clear actuals</button>` : ''}
+      ${canClose ? `<button class="btn btn-primary" id="close-month-btn" ${comp.hasFull && comp.hasAnyForecast && comp.hasAny ? '' : 'disabled'} onclick="openCloseModal()">Close ${recon.month}</button>` : ''}
+    </div>`;
+  } else if (isViewingClosed && isAdmin) {
+    const days = recon.closedAt ? daysSince(recon.closedAt) : 999;
+    const canRe = days<=REOPEN_WINDOW_DAYS && recon.status==='closed';
+    controls = `<div class="control-bar"><span class="month-display closed">${recon.month} · ${recon.status==='superseded'?'SUPERSEDED':'CLOSED'}</span><div class="spacer"></div>${canRe?`<button class="btn btn-danger" onclick="openReopenModal('${state.viewingMonthCode}')">Reopen</button>`:`<span style="font-size:11px;color:#5b6775">${recon.status==='superseded'?'Superseded':'Locked · '+days+'d of '+REOPEN_WINDOW_DAYS}</span>`}</div>`;
+  } else {
+    controls = `<div class="control-bar"><span class="month-display ${isViewingClosed?'closed':isViewingFuture?'future':''}">${recon.month}</span><div class="spacer"></div><span style="font-size:11px;color:#5b6775">Read-only</span></div>`;
+  }
+
+  let footerNote = '';
+  if (isViewingFuture && canEditForecast) {
+    footerNote = `<strong>Future month tip:</strong> Use <em>Copy from previous</em> to seed forecasts from ${monthCodeName(prevMC(state.viewingMonthCode))}, then edit individual SKUs to reflect Pilgrim's revisions. Forecasts here save automatically — closing ${monthCodeName(state.currentMonthCode)} will <em>not</em> overwrite anything you've already entered here.`;
+  } else if (isViewingCurrent) {
+    footerNote = `<strong>Scope rule:</strong> Forecast = 0 means SKU is out of scope. <strong>Closing</strong> locks the month, archives it to history, and rolls actuals forward to next month as starting forecasts (if empty). Pre-filled future months are preserved. CN/DN settlements are handled separately in your accounting system.`;
+  } else if (isViewingClosed) {
+    footerNote = `Within ${REOPEN_WINDOW_DAYS} days of close, admin can reopen. After that, adjustments require a future-month entry.`;
+  }
+
+  document.getElementById('main').innerHTML = `<div class="section-header"><div><div class="section-title">Volume Reconciliation</div><div class="section-sub">Rolling ${HORIZON_MONTHS}-month horizon · click any month</div></div></div>
+    <div class="month-strip">${stripCards}</div>
+    ${banner}${stats}${controls}
+    <div id="recon-table-wrap"></div>
+    ${footerNote ? `<div class="footer-note">${footerNote}</div>` : ''}`;
+
+  refreshReconTable(canEditForecast, canEditActual);
+}
+
+function refreshReconTable(canEditFc, canEditAct) {
+  const recon = viewingRecon();
+  if (!recon) return;
+  const comp = computeRecon(recon.rows, recon.tolerance_pct);
+  const minisAdd = state.cc_matrix?.minis_additional || 4;
+  const indexed = recon.rows.map((r,i) => ({r,i}));
+  let visible = indexed;
+  if (state.hideOutOfScope) visible = visible.filter(({r}) => Number(r.forecast)>0 || (r.actual!==null && r.actual!==undefined && r.actual!==''));
+  if (state.sortByAccuracy && comp.hasAny) visible = [...visible].sort((a,b) => {
+    const aA = a.r.actual!==null && a.r.actual!=='' && a.r.forecast>0 ? Math.abs(Number(a.r.actual)/Number(a.r.forecast)*100-100) : -1;
+    const bA = b.r.actual!==null && b.r.actual!=='' && b.r.forecast>0 ? Math.abs(Number(b.r.actual)/Number(b.r.forecast)*100-100) : -1;
+    return bA - aA;
+  });
+
+  const skuRows = visible.map(({r,i}) => {
+    const oos = Number(r.forecast)===0 && (r.actual===null||r.actual===undefined||r.actual==='');
+    const fcR = comp.tierFC.rate + (r.mini?minisAdd:0);
+    const aR = comp.tierAct ? comp.tierAct.rate + (r.mini?minisAdd:0) : null;
+    const fcA = (Number(r.forecast)||0) * fcR;
+    const hA = r.actual!==null && r.actual!==undefined && r.actual!=='';
+    const aA = hA ? Number(r.actual) * aR : null;
+    const acc = hA && r.forecast>0 ? Number(r.actual)/Number(r.forecast)*100 : null;
+    const aC = acc===null ? '' : Math.abs(acc-100)<=recon.tolerance_pct ? 'acc-good' : Math.abs(acc-100)<=recon.tolerance_pct*3 ? 'acc-warn' : 'acc-bad';
+    const miss = !hA && Number(r.forecast)>0;
+    return `<tr class="recon-row ${oos?'out-of-scope':''}" data-row-index="${i}">
+      <td style="color:#5b6775">${r.sno}</td>
+      <td class="left">${r.name}${r.mini?' <span class="pill pill-mini">MINI</span>':''}${oos?' <span class="pill pill-out-of-scope">OUT OF SCOPE</span>':''}</td>
+      <td><input type="number" class="vol-input forecast-input" value="${r.forecast||''}" data-row="${i}" placeholder="0" ${canEditFc?'':'readonly'}></td>
+      <td style="color:#8a95a3" class="fc-rate-cell">${Number(r.forecast)>0?'₹'+fcR:'—'}</td>
+      <td style="color:#8a95a3" class="fc-amt-cell">${Number(r.forecast)>0?fmtINR0(fcA):'—'}</td>
+      <td><input type="number" class="vol-input actual-input ${miss?'missing':''}" value="${hA?r.actual:''}" placeholder="${miss?'REQUIRED':'—'}" data-row="${i}" ${canEditAct?'':'readonly'}></td>
+      <td style="color:#8a95a3" class="act-rate-cell">${aR&&(Number(r.forecast)>0||hA)?'₹'+aR:'—'}</td>
+      <td style="color:#8a95a3" class="act-amt-cell">${aA===null?'—':fmtINR0(aA)}</td>
+      <td class="acc-cell ${aC}">${acc===null?'—':acc.toFixed(0)+'%'}</td>
+    </tr>`;
+  }).join('');
+
+  const el = document.getElementById('recon-table-wrap');
+  if (!el) return;
+  el.innerHTML = `<div class="table-wrap"><table><thead><tr><th style="width:32px">#</th><th class="left">SKU</th><th>Forecast</th><th>Rate</th><th>Billed</th><th>Actual</th><th>Rate</th><th>Should be</th><th>Acc</th></tr></thead><tbody>${skuRows||'<tr><td colspan="9" style="text-align:center;color:#5b6775;padding:40px">No SKUs.</td></tr>'}</tbody></table></div>`;
+
+  if (canEditFc) el.querySelectorAll('.forecast-input').forEach(inp => {
+    inp.addEventListener('change', e => { const i = +e.target.dataset.row; recon.rows[i].forecast = e.target.value===''?0:Number(e.target.value)||0; renderReconFull(); scheduleReconSave(); });
+    inp.addEventListener('focus', e => e.target.select());
+  });
+  if (canEditAct) el.querySelectorAll('.actual-input').forEach(inp => {
+    inp.addEventListener('change', e => { const i = +e.target.dataset.row; recon.rows[i].actual = e.target.value===''?null:Number(e.target.value)||0; renderReconFull(); scheduleReconSave(); });
+    inp.addEventListener('focus', e => e.target.select());
+  });
+}
+
+function renderHistory() {
+  const closed = state.history.filter(h => h.status==='closed');
+  const tierShifted = closed.filter(h => h.totals?.tierShifted).length;
+  const head = `<div class="section-header"><div><div class="section-title">Settlement History</div><div class="section-sub">${closed.length} closed · ${tierShifted} with tier shifts</div></div></div>`;
+  const stats = `<div class="stats-row">
+    <div class="stat"><div class="stat-label">Closed months</div><div class="stat-value">${closed.length}</div></div>
+    <div class="stat"><div class="stat-label">Tier shifts</div><div class="stat-value" style="color:${tierShifted>0?'#e6b447':'#7fb069'}">${tierShifted}</div><div class="stat-sub">CC rate moved between tiers</div></div>
+    <div class="stat"><div class="stat-label">Stable months</div><div class="stat-value" style="color:#7fb069">${closed.length-tierShifted}</div><div class="stat-sub">tier unchanged</div></div>
+    <div class="stat"><div class="stat-label">Total units shipped</div><div class="stat-value">${fmt(closed.reduce((a,h) => a+(h.totals?.actual||0),0),0)}</div><div class="stat-sub">across closed months</div></div>
+  </div>`;
+  if (state.history.length===0) return head + stats + `<div class="placeholder"><h3>No closed months</h3></div>`;
+  const sorted = [...state.history].sort((a,b) => (b.monthCode||'').localeCompare(a.monthCode||''));
+  const rows = sorted.map(h => {
+    const days = h.closedAt ? daysSince(h.closedAt) : 999;
+    const isAdmin = state.realRole==='admin' && state.previewRole==='admin';
+    const canRe = isAdmin && h.status==='closed' && days<=REOPEN_WINDOW_DAYS;
+    const isSup = h.status==='superseded';
+    const t = h.totals || {};
+    const tierShiftCell = t.tierShifted
+      ? `<span style="color:#e6b447;font-weight:600">₹${t.tierFC} → ₹${t.tierAct}</span>`
+      : (t.tierFC ? `<span style="color:#7fb069">₹${t.tierFC}/unit</span>` : '—');
+    return `<tr style="cursor:pointer" onclick="viewClosedMonth('${h.monthCode}')">
+      <td class="left"><div><strong>${h.month}</strong></div><div style="font-size:10px;color:#5b6775">${h.closedAt?'closed '+new Date(h.closedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' by '+h.closedBy:''}</div></td>
+      <td class="left"><span class="pill ${isSup?'pill-superseded':'pill-locked'}">${isSup?'Superseded':'Closed'}</span></td>
+      <td>${fmt(t.forecast||0,0)}</td><td>${fmt(t.actual||0,0)}</td>
+      <td style="color:${t.variance!=null?'#e8ecf0':'#5b6775'}">${t.variance!=null?(t.variance>0?'+':'')+t.variance.toFixed(1)+'%':'—'}</td>
+      <td>${tierShiftCell}</td>
+      <td onclick="event.stopPropagation()">${canRe?`<button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="openReopenModal('${h.monthCode}')">Reopen</button>`:isSup?'<span class="pill pill-locked">Sup.</span>':`<span class="pill pill-locked">Locked · ${days}d</span>`}</td>
+    </tr>`;
+  }).join('');
+  return head + stats + `<div class="table-wrap"><table><thead><tr><th class="left">Month</th><th class="left">Status</th><th>Forecast</th><th>Actual</th><th>Variance</th><th>CC Rate</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="footer-note">Archive of closed reconciliation cycles. CN/DN settlements are handled separately in your accounting system. Click row to view month details.</div>`;
+}
+
+function renderChangeLog() {
+  // Filter by entity (RM Price, PM Costs, Fixed CC, Month Close, Month Reopen, Formulations Import, etc.)
+  const allEntries = state.changeLog || [];
+
+  // Get all unique entities for filter pills
+  const entities = [...new Set(allEntries.map(e => e.entity || 'Other'))].sort();
+
+  // Apply entity filter
+  let filtered = state.changeLogFilter === 'all' ? allEntries : allEntries.filter(e => e.entity === state.changeLogFilter);
+
+  // Apply search across reason, action, user, after, before
+  const q = (state.searchQuery || '').toLowerCase();
+  if (q) {
+    filtered = filtered.filter(e =>
+      (e.reason||'').toLowerCase().includes(q) ||
+      (e.action||'').toLowerCase().includes(q) ||
+      (e.user||'').toLowerCase().includes(q) ||
+      (e.after||'').toLowerCase().includes(q) ||
+      (e.before||'').toLowerCase().includes(q) ||
+      (e.entity||'').toLowerCase().includes(q)
+    );
+  }
+
+  // Limit display
+  const limit = state.changeLogLimit || 50;
+  const visible = filtered.slice(0, limit);
+  const hasMore = filtered.length > limit;
+
+  // Color map for entity types
+  const entityColor = (ent) => {
+    if (ent === 'RM Price') return '#d4a574';
+    if (ent === 'PM Costs') return '#85b7eb';
+    if (ent === 'Fixed CC') return '#85b7eb';
+    if (ent === 'Month Close') return '#7fb069';
+    if (ent === 'Month Reopen') return '#e6b447';
+    if (ent === 'Formulations Import' || ent === 'Formulations Seed') return '#e6b447';
+    return '#8a95a3';
+  };
+
+  const filterPills = ['all', ...entities].map(ent => {
+    const active = state.changeLogFilter === ent;
+    const count = ent === 'all' ? allEntries.length : allEntries.filter(e => e.entity === ent).length;
+    return `<button class="btn ${active?'btn-primary':''}" style="padding:4px 10px;font-size:11px" onclick="setChangeLogFilter('${ent}')">${ent === 'all' ? 'All' : ent} <span style="opacity:0.7">·${count}</span></button>`;
+  }).join('');
+
+  const head = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Change Log</div>
+        <div class="section-sub">${allEntries.length} entries · immutable audit trail</div>
+      </div>
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="search" placeholder="Reason, user, action…" value="${state.searchQuery||''}" oninput="updateSearch(this.value)">
+      </div>
+    </div>
+    <div class="control-bar" style="flex-wrap:wrap;gap:6px">${filterPills}</div>
+  `;
+
+  if (allEntries.length === 0) {
+    return head + `<div class="placeholder"><h3>No change log entries yet</h3><p>Edits to RM rates, PM costs, formulations, and month closes will appear here.</p></div>`;
+  }
+
+  if (visible.length === 0) {
+    return head + `<div class="placeholder"><h3>No matches</h3><p>Try clearing the filter or search.</p></div>`;
+  }
+
+  const rows = visible.map(e => {
+    const dt = e.ts ? new Date(e.ts) : null;
+    const dtValid = dt && !isNaN(dt.getTime());
+    const dateStr = dtValid ? dt.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) : '—';
+    const timeStr = dtValid ? dt.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) : '';
+    const ent = e.entity || 'Other';
+    const beforeStr = (e.before||'').toString();
+    const afterStr = (e.after||'').toString();
+    const beforeShort = beforeStr.length > 60 ? beforeStr.substring(0, 60) + '…' : beforeStr;
+    const afterShort = afterStr.length > 60 ? afterStr.substring(0, 60) + '…' : afterStr;
+    return `<tr>
+      <td style="color:#8a95a3;font-size:11px;white-space:nowrap">
+        <div style="color:#e8ecf0">${dateStr}</div>
+        <div style="color:#5b6775">${timeStr}</div>
+      </td>
+      <td><span class="pill" style="background:#161e26;color:${entityColor(ent)};border:1px solid #1f2a35">${ent}</span></td>
+      <td class="left" style="color:#e8ecf0">${e.action || '—'}</td>
+      <td class="left" style="color:#5b6775;font-size:11px;font-family:'SF Mono',Menlo,monospace" title="${beforeStr.replace(/"/g,'&quot;')}">${beforeShort||'—'}</td>
+      <td class="left" style="color:#7fb069;font-size:11px;font-family:'SF Mono',Menlo,monospace" title="${afterStr.replace(/"/g,'&quot;')}">${afterShort||'—'}</td>
+      <td class="left" style="color:#8a95a3;font-size:12px;max-width:300px">${e.reason || '—'}</td>
+      <td class="left" style="color:#8a95a3;font-size:11px;white-space:nowrap">
+        <div>${e.user || '—'}</div>
+        <div style="color:#5b6775;font-size:10px">${e.role || ''}</div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const moreBtn = hasMore ? `<div style="text-align:center;padding:14px"><button class="btn" onclick="loadMoreChangeLog()">Show ${Math.min(50, filtered.length - limit)} more (${filtered.length - limit} remaining)</button></div>` : '';
+
+  return head + `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th class="left" style="width:90px">When</th>
+          <th class="left" style="width:120px">Type</th>
+          <th class="left">Action</th>
+          <th class="left">Before</th>
+          <th class="left">After</th>
+          <th class="left">Reason</th>
+          <th class="left" style="width:140px">By</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${moreBtn}
+    <div class="footer-note">Showing ${visible.length} of ${filtered.length} entries (${allEntries.length} total). The change log is append-only — entries cannot be edited or deleted, even by admins.</div>
+  `;
+}
+
+function renderModal() {
+  const el = document.getElementById('modal-container');
+  if (!state.modal) { el.innerHTML = ''; return; }
+  if (state.modal.kind==='close') {
+    const recon = state.allRecons[state.currentMonthCode];
+    const comp = computeRecon(recon.rows, recon.tolerance_pct);
+    const tierShiftImpact = (comp.tierShifted && comp.totalAct)
+      ? (comp.tierAct.rate - comp.tierFC.rate) * comp.totalAct
+      : 0;
+    const tierMsg = comp.tierShifted
+      ? `<span style="color:#e6b447">Shifted ₹${comp.tierFC.rate} → ₹${comp.tierAct.rate}/unit</span>`
+      : `<span style="color:#7fb069">No tier change at ₹${comp.tierFC.rate}/unit</span>`;
+    const nmCode = nextMC(recon.monthCode);
+    const nmEx = state.allRecons[nmCode];
+    const nmHas = nmEx && nmEx.rows.some(r => Number(r.forecast)>0);
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Close ${recon.month}?</h3>
+      <div class="modal-body">Locks the month, archives it to history. CN/DN settlements (if any) are handled separately in your accounting system.</div>
+      <div class="modal-grid">
+        <div class="label">In scope</div><div class="val">${comp.inScope.length} of ${recon.rows.length}</div>
+        <div class="label">Forecast</div><div class="val">${fmt(comp.totalFC,0)} @ ₹${comp.tierFC.rate}</div>
+        <div class="label">Actual</div><div class="val">${fmt(comp.totalAct,0)} @ ₹${comp.tierAct.rate}</div>
+        <div class="label">Variance</div><div class="val">${comp.variance>0?'+':''}${comp.variance.toFixed(1)}%</div>
+        <div class="label">CC tier</div><div class="val">${tierMsg}</div>
+        ${comp.tierShifted ? `<div class="label">Tier impact</div><div class="val">${tierShiftImpact>0?'+':'-'}₹${fmt(Math.abs(tierShiftImpact),0)} <span style="color:#5b6775;font-size:11px">across ${fmt(comp.totalAct,0)} units</span></div>` : ''}
+        <div class="label">Next month</div><div class="val">${monthCodeName(nmCode)} ${nmHas?'<span style="color:#85b7eb">— pre-filled forecasts kept</span>':'— actuals roll forward'}</div>
+      </div>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-primary" onclick="confirmClose()">Confirm</button></div>
+    </div></div>`;
+  } else if (state.modal.kind==='reopen') {
+    const h = state.allRecons[state.modal.monthCode];
+    if (!h) return;
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Reopen ${h.month}?</h3>
+      <div class="banner banner-warn" style="margin-bottom:14px">Original close marked superseded.</div>
+      <div class="modal-body"><strong style="color:#e8ecf0">Closed by:</strong> ${h.closedBy} on ${new Date(h.closedAt).toLocaleDateString('en-IN')}<br><strong style="color:#e8ecf0">Window:</strong> ${daysSince(h.closedAt)}d of ${REOPEN_WINDOW_DAYS}</div>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-danger" onclick="confirmReopen()">Reopen</button></div>
+    </div></div>`;
+  } else if (state.modal.kind==='edit-rm') {
+    const r = state.rms.find(x => x.id === state.modal.rmId);
+    if (!r) return;
+    const aff = countAffectedSKUs(r.name);
+    const skuList = aff.skus.length > 0 ? aff.skus.map(s => `SKU ${s.sno}: ${s.name}`).join('<br>') : 'None';
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Edit RM Rate</h3>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+        <div style="color:#e8ecf0;font-weight:600;margin-bottom:6px">${r.name}</div>
+        <div style="color:#8a95a3;font-size:12px">${r.make||'—'} · INCI: ${r.inci||'—'}</div>
+      </div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Current rate</label>
+      <input type="text" value="₹${fmt(r.rate,0)} per kg" disabled style="width:100%;background:#161e26;border:1px solid #1f2a35;color:#5b6775;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">New rate (₹/kg) <span style="color:#d4664e">*</span></label>
+      <input type="number" id="rm-new-rate" step="0.01" placeholder="Enter new rate" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px" autofocus>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason for change <span style="color:#d4664e">*</span></label>
+      <textarea id="rm-reason" rows="3" placeholder="e.g. Vendor revision dated 24-Apr-2026" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <details style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:8px 12px;margin-bottom:14px">
+        <summary style="cursor:pointer;font-size:12px;color:#${aff.count>0?'e6b447':'8a95a3'}">⚠ Affects ${aff.count} SKU${aff.count===1?'':'s'} via formulation linkage${aff.count>0?' (click to expand)':''}</summary>
+        <div style="font-size:11px;color:#8a95a3;margin-top:8px;line-height:1.6">${skuList}</div>
+      </details>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-primary" onclick="confirmEditRM()">Save</button></div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('rm-new-rate')?.focus(), 50);
+  } else if (state.modal.kind==='add-rm') {
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Add new RM</h3>
+      <div class="modal-body">Add a new raw material to the pricing chart. The trade name will be matched against formulations to auto-resolve any incomplete SKUs.</div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Trade name <span style="color:#d4664e">*</span></label>
+      <input type="text" id="add-rm-name" placeholder="e.g. Xiameter PMS 245/BRB CM 50" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px" autofocus>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Make / Vendor</label>
+      <input type="text" id="add-rm-make" placeholder="e.g. Dow / BRB" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">INCI name</label>
+      <input type="text" id="add-rm-inci" placeholder="e.g. Dimethicone" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Rate (₹/kg) <span style="color:#d4664e">*</span></label>
+      <input type="number" id="add-rm-rate" step="0.01" placeholder="0.00" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason for adding <span style="color:#d4664e">*</span></label>
+      <textarea id="add-rm-reason" rows="3" placeholder="e.g. New vendor onboarded · Was previously unresolved in 3 SKUs" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-primary" onclick="confirmAddRM()">Add RM</button></div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('add-rm-name')?.focus(), 50);
+  } else if (state.modal.kind==='edit-pm') {
+    const sku = state.skus.find(s => s.sno === state.modal.sno);
+    if (!sku) return;
+    const fields = [
+      { key: 'jar_bottle',    label: 'Jar / Bottle' },
+      { key: 'cap_pump',      label: 'Cap / Pump' },
+      { key: 'label',         label: 'Label' },
+      { key: 'monocarton',    label: 'Monocarton' },
+      { key: 'shrink',        label: 'Shrink Sleeve' },
+      { key: 'freight_pm',    label: 'Freight — PM' },
+      { key: 'freight_label', label: 'Freight — Label' },
+      { key: 'freight_mono',  label: 'Freight — Mono' },
+      { key: 'outer_carton',  label: 'Outer Carton' },
+      { key: 'ink',           label: 'Ink' }
+    ];
+    const fieldRows = fields.map(f => {
+      const cur = sku[f.key] || 0;
+      return `<tr>
+        <td class="left" style="color:#e8ecf0;padding:6px 10px">${f.label}</td>
+        <td style="color:#5b6775;padding:6px 10px;font-size:12px">${fmt(cur, 4)}</td>
+        <td style="padding:6px 10px"><input type="number" class="pm-edit-input" data-key="${f.key}" step="0.0001" value="${cur}" style="width:120px;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:5px 8px;border-radius:3px;font-family:inherit;font-size:12px;text-align:right"></td>
+      </tr>`;
+    }).join('');
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()" style="max-width:680px">
+      <h3>Edit PM costs</h3>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+        <div style="color:#e8ecf0;font-weight:600;margin-bottom:4px">SKU ${sku.sno}: ${sku.name}</div>
+        <div style="color:#8a95a3;font-size:12px">${sku.size}${sku.unit} · Edit any/all PM components below</div>
+      </div>
+      <div class="table-wrap" style="margin-bottom:14px"><table>
+        <thead><tr><th class="left">Component</th><th>Current</th><th>New (₹/unit)</th></tr></thead>
+        <tbody>${fieldRows}</tbody>
+      </table></div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason for change <span style="color:#d4664e">*</span></label>
+      <textarea id="pm-reason" rows="3" placeholder="e.g. Vendor revised PM rates effective 24-Apr · New monocarton supplier" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <div style="font-size:11px;color:#5b6775;margin-bottom:10px">Only changed values will be logged. Unchanged components are skipped.</div>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-primary" onclick="confirmEditPm()">Save changes</button></div>
+    </div></div>`;
+  } else if (state.modal.kind==='edit-fixed-cc') {
+    const sku = state.skus.find(s => s.sno === state.modal.sno);
+    if (!sku) return;
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Edit Fixed CC</h3>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+        <div style="color:#e8ecf0;font-weight:600;margin-bottom:4px">SKU ${sku.sno}: ${sku.name}</div>
+        <div style="color:#8a95a3;font-size:12px">Manual cost addition on top of formulation-based RM cost (₹/unit)</div>
+      </div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Current Fixed CC</label>
+      <input type="text" value="₹${fmt(sku.fixed_cc||0, 2)} per unit" disabled style="width:100%;background:#161e26;border:1px solid #1f2a35;color:#5b6775;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px">
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">New Fixed CC (₹/unit) <span style="color:#d4664e">*</span></label>
+      <input type="number" id="fixed-cc-new" step="0.01" value="${sku.fixed_cc||0}" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:14px;margin-bottom:14px" autofocus>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason <span style="color:#d4664e">*</span></label>
+      <textarea id="fixed-cc-reason" rows="3" placeholder="e.g. Tier change · Manual override for prototype run" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-primary" onclick="confirmEditFixedCc()">Save</button></div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('fixed-cc-new')?.focus(), 50);
+  } else if (state.modal.kind==='toggle-status') {
+    const sku = state.skus.find(s => s.sno === state.modal.sno);
+    if (!sku) return;
+    const goingInactive = (sku.status !== 'inactive');
+    const action = goingInactive ? 'Deactivate' : 'Activate';
+
+    // Compute future-month forecasts that will be zeroed (only applicable for deactivation)
+    let futureForecasts = [];
+    if (goingInactive) {
+      Object.values(state.allRecons).forEach(recon => {
+        if (recon.status !== 'open') return;
+        if (recon.monthCode === state.currentMonthCode) return; // current month preserved
+        if (recon.monthCode.localeCompare(state.currentMonthCode) <= 0) return; // past months untouched
+        const row = (recon.rows || []).find(r => r.sno === sku.sno);
+        if (row && Number(row.forecast) > 0) {
+          futureForecasts.push({ monthCode: recon.monthCode, month: recon.month, forecast: Number(row.forecast) });
+        }
+      });
+    }
+    // Current month forecast (informational)
+    let currentForecast = 0;
+    if (goingInactive && state.currentMonthCode) {
+      const cur = state.allRecons[state.currentMonthCode];
+      if (cur) {
+        const row = (cur.rows || []).find(r => r.sno === sku.sno);
+        if (row) currentForecast = Number(row.forecast) || 0;
+      }
+    }
+
+    const futureWarn = goingInactive && futureForecasts.length > 0 ? `
+      <div class="banner banner-warn" style="margin-bottom:14px">
+        <strong>Will zero out ${futureForecasts.length} future forecast${futureForecasts.length===1?'':'s'}:</strong><br>
+        ${futureForecasts.map(f => `${f.month}: ${fmt(f.forecast,0)} units`).join('<br>')}
+        ${currentForecast > 0 ? `<br><br><span style="color:#85b7eb">Current month (${state.allRecons[state.currentMonthCode]?.month}: ${fmt(currentForecast,0)} units) will be preserved.</span>` : ''}
+      </div>
+    ` : (goingInactive && currentForecast > 0 ? `
+      <div class="banner banner-info" style="margin-bottom:14px">Current month forecast (${fmt(currentForecast,0)} units) will be preserved. No future month forecasts to zero out.</div>
+    ` : '');
+
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>${action} SKU?</h3>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+        <div style="color:#e8ecf0;font-weight:600;margin-bottom:4px">SKU ${sku.sno}: ${sku.name}</div>
+        <div style="color:#8a95a3;font-size:12px">${sku.size}${sku.unit} · Currently <strong style="color:${sku.status==='inactive'?'#d4664e':'#7fb069'}">${sku.status==='inactive'?'INACTIVE':'ACTIVE'}</strong></div>
+      </div>
+      ${futureWarn}
+      <div class="modal-body">
+        ${goingInactive
+          ? 'Deactivated SKUs are greyed out on the dashboard with an INACTIVE tag. They are still visible (costs still computed), but excluded from future-month reconciliation forecasts.'
+          : 'Activating restores the SKU to normal display. Forecasts are not auto-populated — you can add them manually as needed.'}
+      </div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason <span style="color:#d4664e">*</span></label>
+      <textarea id="toggle-reason" rows="3" placeholder="${goingInactive ? 'e.g. SKU EOL after current month · Pilgrim discontinued' : 'e.g. SKU re-launched · Pilgrim resumed orders'}" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn ${goingInactive?'btn-danger':'btn-primary'}" onclick="confirmToggleStatus()">${action}</button></div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('toggle-reason')?.focus(), 50);
+  } else if (state.modal.kind === 'reject-proposal') {
+    const p = state.proposals.find(x => x.id === state.modal.proposalId);
+    if (!p) return;
+    el.innerHTML = `<div class="modal-bg" onclick="closeModalIfBg(event)"><div class="modal" onclick="event.stopPropagation()">
+      <h3>Reject proposal?</h3>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+        <div style="color:#e8ecf0;font-weight:600;margin-bottom:4px">${p.target_label}</div>
+        <div style="color:#8a95a3;font-size:12px">${p.before_summary} → <span style="color:#7fb069">${p.after_summary}</span></div>
+        <div style="color:#5b6775;font-size:11px;margin-top:6px">Proposer: ${p.proposer_name} · ${p.reason}</div>
+      </div>
+      <label style="display:block;font-size:11px;color:#8a95a3;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Reason for rejection <span style="color:#d4664e">*</span></label>
+      <textarea id="reject-reason" rows="3" placeholder="e.g. Vendor revision not yet confirmed · Need quotation document" style="width:100%;background:#0a0e13;border:1px solid #1f2a35;color:#e8ecf0;padding:9px 12px;border-radius:4px;font-family:inherit;font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+      <div class="modal-buttons"><button class="btn" onclick="closeModalCancel()">Cancel</button><button class="btn btn-danger" onclick="confirmRejectProposal()">Reject proposal</button></div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('reject-reason')?.focus(), 50);
+  }
+}
+
+window.setTab = t => { state.tab = t; state.searchQuery = ''; state.expandedSku = null; render(); };
+window.setPreviewRole = r => { state.previewRole = r; state.expandedSku = null; render(); };
+window.updateSearch = v => {
+  state.searchQuery = v;
+  document.getElementById('main').innerHTML =
+    state.tab==='dashboard' ? renderDashboard() :
+    state.tab==='rm' ? renderRM() :
+    state.tab==='changelog' ? renderChangeLog() : '';
+};
+window.setChangeLogFilter = ent => {
+  state.changeLogFilter = ent;
+  state.changeLogLimit = 50; // reset pagination on filter change
+  document.getElementById('main').innerHTML = renderChangeLog();
+};
+window.loadMoreChangeLog = () => {
+  state.changeLogLimit = (state.changeLogLimit || 50) + 50;
+  document.getElementById('main').innerHTML = renderChangeLog();
+};
+window.toggleExpand = sno => { state.expandedSku = state.expandedSku===sno?null:sno; document.getElementById('main').innerHTML = renderDashboard(); };
+window.toggleSort = () => { state.sortByAccuracy = !state.sortByAccuracy; renderReconFull(); };
+window.toggleHideOutOfScope = () => { state.hideOutOfScope = !state.hideOutOfScope; renderReconFull(); };
+window.setViewingMonth = mc => { state.viewingMonthCode = mc; renderReconFull(); };
+window.viewClosedMonth = mc => { state.tab = 'reconciliation'; state.viewingMonthCode = mc; render(); };
+
+// CHUNK 2: tolerance editable on any open month (not just current)
+window.updateTolerance = v => {
+  const recon = viewingRecon();
+  if (!recon || recon.status !== 'open') return;
+  if (state.realRole !== 'admin' || state.previewRole !== 'admin') return;
+  recon.tolerance_pct = Number(v) || 0;
+  state.allRecons[state.viewingMonthCode] = recon;
+  renderReconFull();
+  scheduleReconSave();
+};
+window.simulateScenario = kind => {
+  if (state.realRole!=='admin' || state.previewRole!=='admin' || state.viewingMonthCode!==state.currentMonthCode) return;
+  const recon = state.allRecons[state.currentMonthCode];
+  recon.rows.forEach(r => {
+    const f = Number(r.forecast) || 0;
+    if (f===0) { r.actual = null; return; }
+    if (kind==='shortfall') r.actual = Math.round(f * (0.35 + Math.random()*0.2));
+    else if (kind==='over') r.actual = Math.round(f * (1.4 + Math.random()*0.4));
+    else if (kind==='tolerance') r.actual = Math.round(f * (0.96 + Math.random()*0.06));
+    else if (kind==='mixed') {
+      const x = Math.random();
+      if (x<0.3) r.actual = Math.round(f * (0.4 + Math.random()*0.3));
+      else if (x<0.5) r.actual = Math.round(f * (1.3 + Math.random()*0.5));
+      else r.actual = Math.round(f * (0.93 + Math.random()*0.14));
+    }
+  });
+  renderReconFull(); scheduleReconSave();
+};
+window.resetActuals = () => {
+  if (state.realRole!=='admin' || state.previewRole!=='admin' || state.viewingMonthCode!==state.currentMonthCode) return;
+  state.allRecons[state.currentMonthCode].rows.forEach(r => r.actual = null);
+  renderReconFull(); scheduleReconSave();
+};
+window.copyFromPrev = () => {
+  if (state.realRole!=='admin' || state.previewRole!=='admin') return;
+  const recon = viewingRecon();
+  if (!recon || recon.status !== 'open') return;
+  copyFromPrevious();
+};
+window.openCloseModal = () => {
+  if (state.realRole!=='admin') return;
+  const recon = state.allRecons[state.currentMonthCode];
+  const comp = computeRecon(recon.rows, recon.tolerance_pct);
+  if (!comp.hasAnyForecast) { showToast("Enter forecasts first.", true); return; }
+  if (!comp.hasFull) { showToast(comp.missing.length+" actuals missing.", true); return; }
+  if (!comp.hasAny) { showToast("Enter actuals first.", true); return; }
+  state.modal = { kind:'close' };
+  renderModal();
+};
+window.openReopenModal = mc => { if (state.realRole!=='admin') return; state.modal = { kind:'reopen', monthCode: mc }; renderModal(); };
+window.closeModalCancel = () => { state.modal = null; renderModal(); };
+window.closeModalIfBg = ev => { state.modal = null; renderModal(); };
+window.confirmClose = async () => { state.modal = null; renderModal(); await closeMonth(); };
+window.confirmReopen = async () => { const mc = state.modal.monthCode; state.modal = null; renderModal(); await reopenMonth(mc); };
+
+// === RM EDIT / ADD ===
+window.openEditRMModal = rmId => {
+  if (!canEdit()) return;
+  state.modal = { kind:'edit-rm', rmId };
+  renderModal();
+};
+window.openAddRMModal = () => {
+  if (!canEdit()) return;
+  state.modal = { kind:'add-rm' };
+  renderModal();
+};
+
+window.confirmEditRM = async () => {
+  const rmId = state.modal.rmId;
+  const r = state.rms.find(x => x.id === rmId);
+  if (!r) { showToast("RM not found", true); return; }
+  const newRateStr = document.getElementById('rm-new-rate').value;
+  const reason = document.getElementById('rm-reason').value.trim();
+  const newRate = Number(newRateStr);
+  if (!newRateStr || !isFinite(newRate) || newRate <= 0) { showToast("Enter a valid new rate.", true); return; }
+  if (reason.length < 3) { showToast("Reason must be at least 3 characters.", true); return; }
+  if (newRate === r.rate) { showToast("New rate is the same as current rate.", true); return; }
+
+  const oldRate = r.rate;
+  const aff = countAffectedSKUs(r.name);
+
+  // EDITOR PATH: submit as proposal instead of writing live
+  if (!canWriteDirectly()) {
+    try {
+      await submitProposal({
+        entity: 'rm_edit',
+        target_id: rmId,
+        target_label: r.name,
+        before_summary: '₹' + fmt(oldRate, 2) + '/kg',
+        after_summary: '₹' + fmt(newRate, 2) + '/kg',
+        payload: { rmId, oldRate, newRate, rmName: r.name, affectedSKUCount: aff.count },
+        reason
+      });
+      state.modal = null;
+      renderModal();
+      showToast(`Proposal submitted: ${r.name} → ₹${fmt(newRate,0)}/kg. Awaiting admin approval.`);
+    } catch (err) {
+      console.error("Proposal submit error:", err);
+      showToast("Submission failed: " + err.message, true);
+    }
+    return;
+  }
+
+  // ADMIN PATH: write directly
+  try {
+    // Atomic-ish: update rm_prices, write change_log, write rm_price_history snapshot
+    await setDoc(doc(db, 'rm_prices', rmId), {
+      ...r,
+      rate: newRate,
+      old_rate: oldRate,
+      updatedAt: new Date().toISOString(),
+      updatedBy: state.userProfile.name
+    });
+    await setDoc(doc(db, 'change_log', 'rm_edit_' + rmId + '_' + Date.now()), {
+      ts: new Date().toISOString(),
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'RM Price',
+      action: 'Edited rate for ' + r.name,
+      before: '₹' + fmt(oldRate, 2) + '/kg',
+      after: '₹' + fmt(newRate, 2) + '/kg',
+      reason: reason,
+      details: {
+        rmId: rmId,
+        rmName: r.name,
+        oldRate: oldRate,
+        newRate: newRate,
+        deltaPct: ((newRate - oldRate) / oldRate * 100),
+        affectedSKUCount: aff.count,
+        affectedSKUs: aff.skus.map(s => s.sno)
+      }
+    });
+    // Snapshot to rm_price_history (seed for future trend chart)
+    await setDoc(doc(db, 'rm_price_history', rmId + '_' + Date.now()), {
+      rmId: rmId,
+      rmName: r.name,
+      rate: newRate,
+      previousRate: oldRate,
+      changedAt: new Date().toISOString(),
+      changedBy: state.userProfile.name,
+      reason: reason
+    });
+
+    // Update local state
+    r.rate = newRate;
+    r.old_rate = oldRate;
+    invalidateRMLookup();
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderRM();
+    showToast(`Updated ${r.name}: ₹${fmt(oldRate,0)} → ₹${fmt(newRate,0)} · ${aff.count} SKU${aff.count===1?'':'s'} affected`);
+  } catch (err) {
+    console.error("RM edit error:", err);
+    showToast("Save failed: " + err.message, true);
+  }
+};
+
+window.confirmAddRM = async () => {
+  const name = document.getElementById('add-rm-name').value.trim();
+  const make = document.getElementById('add-rm-make').value.trim();
+  const inci = document.getElementById('add-rm-inci').value.trim();
+  const rateStr = document.getElementById('add-rm-rate').value;
+  const reason = document.getElementById('add-rm-reason').value.trim();
+  const rate = Number(rateStr);
+
+  if (!name) { showToast("Trade name is required.", true); return; }
+  if (!rateStr || !isFinite(rate) || rate <= 0) { showToast("Enter a valid rate.", true); return; }
+  if (reason.length < 3) { showToast("Reason must be at least 3 characters.", true); return; }
+
+  // Check for duplicate
+  const dup = state.rms.find(x => String(x.name||'').trim().toLowerCase() === name.toLowerCase());
+  if (dup) { showToast(`"${name}" already exists in the chart (SKU# ${dup.sno}). Edit it instead.`, true); return; }
+
+  const nextSno = Math.max(0, ...state.rms.map(x => x.sno||0)) + 1;
+  const newId = 'rm_' + nextSno;
+  const aff = countAffectedSKUs(name);
+
+  // EDITOR PATH: submit as proposal
+  if (!canWriteDirectly()) {
+    try {
+      await submitProposal({
+        entity: 'rm_add',
+        target_id: newId,
+        target_label: name,
+        before_summary: 'not in chart',
+        after_summary: '₹' + fmt(rate, 2) + '/kg',
+        payload: { sno: nextSno, name, make, inci, rate, unblockedSKUCount: aff.count },
+        reason
+      });
+      state.modal = null;
+      renderModal();
+      showToast(`Proposal submitted: add ${name} at ₹${fmt(rate,0)}/kg. Awaiting admin approval.`);
+    } catch (err) {
+      console.error("Proposal submit error:", err);
+      showToast("Submission failed: " + err.message, true);
+    }
+    return;
+  }
+
+  try {
+    const newDoc = {
+      sno: nextSno,
+      name: name,
+      make: make,
+      inci: inci,
+      rate: rate,
+      old_rate: null,
+      createdAt: new Date().toISOString(),
+      createdBy: state.userProfile.name
+    };
+    await setDoc(doc(db, 'rm_prices', newId), newDoc);
+    await setDoc(doc(db, 'change_log', 'rm_add_' + newId + '_' + Date.now()), {
+      ts: new Date().toISOString(),
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'RM Price',
+      action: 'Added new RM: ' + name,
+      before: 'not in chart',
+      after: '₹' + fmt(rate, 2) + '/kg',
+      reason: reason,
+      details: {
+        rmId: newId,
+        rmName: name,
+        rate: rate,
+        make: make,
+        inci: inci,
+        unblockedSKUCount: aff.count,
+        unblockedSKUs: aff.skus.map(s => s.sno)
+      }
+    });
+    await setDoc(doc(db, 'rm_price_history', newId + '_' + Date.now()), {
+      rmId: newId,
+      rmName: name,
+      rate: rate,
+      previousRate: null,
+      changedAt: new Date().toISOString(),
+      changedBy: state.userProfile.name,
+      reason: 'Initial entry · ' + reason
+    });
+
+    // Update local state
+    state.rms.push({ id: newId, ...newDoc });
+    state.rms.sort((a,b) => (a.sno||0)-(b.sno||0));
+    invalidateRMLookup();
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderRM();
+    showToast(`Added "${name}" at ₹${fmt(rate,0)}/kg${aff.count>0?` · unblocked ${aff.count} SKU${aff.count===1?'':'s'}`:''}`);
+  } catch (err) {
+    console.error("Add RM error:", err);
+    showToast("Add failed: " + err.message, true);
+  }
+};
+
+// === PM COSTS EDIT ===
+window.openEditPmModal = sno => {
+  if (!canEdit()) return;
+  state.modal = { kind:'edit-pm', sno };
+  renderModal();
+};
+
+window.openEditFixedCcModal = sno => {
+  if (!canEdit()) return;
+  state.modal = { kind:'edit-fixed-cc', sno };
+  renderModal();
+};
+
+window.confirmEditPm = async () => {
+  const sno = state.modal.sno;
+  const sku = state.skus.find(s => s.sno === sno);
+  if (!sku) { showToast("SKU not found", true); return; }
+  const reason = document.getElementById('pm-reason').value.trim();
+  if (reason.length < 3) { showToast("Reason must be at least 3 characters.", true); return; }
+
+  // Collect changes (only fields that actually changed)
+  const inputs = document.querySelectorAll('.pm-edit-input');
+  const changes = {};
+  let hasChanges = false;
+  inputs.forEach(inp => {
+    const key = inp.dataset.key;
+    const newVal = Number(inp.value);
+    const oldVal = Number(sku[key] || 0);
+    if (!isFinite(newVal) || newVal < 0) return;
+    if (Math.abs(newVal - oldVal) > 1e-6) {
+      changes[key] = { old: oldVal, new: newVal };
+      hasChanges = true;
+    }
+  });
+
+  if (!hasChanges) { showToast("No values changed.", true); return; }
+
+  // EDITOR PATH: submit as proposal
+  if (!canWriteDirectly()) {
+    const beforeText = Object.entries(changes).map(([k, v]) => `${k}=₹${fmt(v.old, 2)}`).join('; ');
+    const afterText = Object.entries(changes).map(([k, v]) => `${k}=₹${fmt(v.new, 2)}`).join('; ');
+    try {
+      await submitProposal({
+        entity: 'pm_edit',
+        target_id: sku.id,
+        target_label: `SKU ${sku.sno}: ${sku.name}`,
+        before_summary: beforeText,
+        after_summary: afterText,
+        payload: { skuId: sku.id, sno: sku.sno, skuName: sku.name, changes },
+        reason
+      });
+      state.modal = null;
+      renderModal();
+      showToast(`Proposal submitted: ${Object.keys(changes).length} PM field${Object.keys(changes).length===1?'':'s'} for SKU ${sku.sno}. Awaiting admin approval.`);
+    } catch (err) {
+      console.error("Proposal submit error:", err);
+      showToast("Submission failed: " + err.message, true);
+    }
+    return;
+  }
+
+  try {
+    // Build updated SKU doc
+    const updatedSku = { ...sku };
+    Object.entries(changes).forEach(([key, { new: newVal }]) => {
+      updatedSku[key] = newVal;
+    });
+    updatedSku.pm_updatedAt = new Date().toISOString();
+    updatedSku.pm_updatedBy = state.userProfile.name;
+
+    // Strip the local 'id' field before writing (Firestore doesn't need it in the doc)
+    const { id, ...skuToWrite } = updatedSku;
+    await setDoc(doc(db, 'skus', sku.id), skuToWrite);
+
+    // Build human-readable change description
+    const changeText = Object.entries(changes).map(([k, v]) => `${k}: ₹${fmt(v.old, 2)} → ₹${fmt(v.new, 2)}`).join('; ');
+    const beforeText = Object.entries(changes).map(([k, v]) => `${k}=₹${fmt(v.old, 2)}`).join('; ');
+    const afterText = Object.entries(changes).map(([k, v]) => `${k}=₹${fmt(v.new, 2)}`).join('; ');
+
+    await setDoc(doc(db, 'change_log', 'pm_edit_' + sku.id + '_' + Date.now()), {
+      ts: new Date().toISOString(),
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'PM Costs',
+      action: `Edited PM costs for SKU ${sku.sno}: ${sku.name}`,
+      before: beforeText,
+      after: afterText,
+      reason: reason,
+      details: {
+        skuId: sku.id,
+        sno: sku.sno,
+        skuName: sku.name,
+        changes: changes,
+        changeCount: Object.keys(changes).length
+      }
+    });
+
+    // Update local state
+    Object.entries(changes).forEach(([key, { new: newVal }]) => {
+      sku[key] = newVal;
+    });
+    sku.pm_updatedAt = updatedSku.pm_updatedAt;
+    sku.pm_updatedBy = updatedSku.pm_updatedBy;
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderDashboard();
+    showToast(`Updated ${Object.keys(changes).length} PM field${Object.keys(changes).length===1?'':'s'} for SKU ${sku.sno}`);
+  } catch (err) {
+    console.error("PM edit error:", err);
+    showToast("Save failed: " + err.message, true);
+  }
+};
+
+window.confirmEditFixedCc = async () => {
+  const sno = state.modal.sno;
+  const sku = state.skus.find(s => s.sno === sno);
+  if (!sku) { showToast("SKU not found", true); return; }
+  const newValStr = document.getElementById('fixed-cc-new').value;
+  const reason = document.getElementById('fixed-cc-reason').value.trim();
+  const newVal = Number(newValStr);
+  const oldVal = Number(sku.fixed_cc || 0);
+
+  if (newValStr === '' || !isFinite(newVal) || newVal < 0) { showToast("Enter a valid value (≥ 0).", true); return; }
+  if (reason.length < 3) { showToast("Reason must be at least 3 characters.", true); return; }
+  if (Math.abs(newVal - oldVal) < 1e-6) { showToast("New value is the same as current.", true); return; }
+
+  // EDITOR PATH: submit as proposal
+  if (!canWriteDirectly()) {
+    try {
+      await submitProposal({
+        entity: 'fixed_cc_edit',
+        target_id: sku.id,
+        target_label: `SKU ${sku.sno}: ${sku.name}`,
+        before_summary: '₹' + fmt(oldVal, 2),
+        after_summary: '₹' + fmt(newVal, 2),
+        payload: { skuId: sku.id, sno: sku.sno, skuName: sku.name, oldVal, newVal },
+        reason
+      });
+      state.modal = null;
+      renderModal();
+      showToast(`Proposal submitted: Fixed CC for SKU ${sku.sno}. Awaiting admin approval.`);
+    } catch (err) {
+      console.error("Proposal submit error:", err);
+      showToast("Submission failed: " + err.message, true);
+    }
+    return;
+  }
+
+  try {
+    const updatedSku = { ...sku, fixed_cc: newVal, pm_updatedAt: new Date().toISOString(), pm_updatedBy: state.userProfile.name };
+    const { id, ...skuToWrite } = updatedSku;
+    await setDoc(doc(db, 'skus', sku.id), skuToWrite);
+
+    await setDoc(doc(db, 'change_log', 'fixed_cc_edit_' + sku.id + '_' + Date.now()), {
+      ts: new Date().toISOString(),
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'Fixed CC',
+      action: `Edited Fixed CC for SKU ${sku.sno}: ${sku.name}`,
+      before: '₹' + fmt(oldVal, 2),
+      after: '₹' + fmt(newVal, 2),
+      reason: reason,
+      details: { skuId: sku.id, sno: sku.sno, skuName: sku.name, oldFixedCc: oldVal, newFixedCc: newVal }
+    });
+
+    sku.fixed_cc = newVal;
+    sku.pm_updatedAt = updatedSku.pm_updatedAt;
+    sku.pm_updatedBy = updatedSku.pm_updatedBy;
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderDashboard();
+    showToast(`Updated Fixed CC for SKU ${sku.sno}: ₹${fmt(oldVal,2)} → ₹${fmt(newVal,2)}`);
+  } catch (err) {
+    console.error("Fixed CC edit error:", err);
+    showToast("Save failed: " + err.message, true);
+  }
+};
+
+// === SKU ACTIVATE / DEACTIVATE ===
+window.openToggleStatusModal = sno => {
+  if (!canEdit()) return;
+  state.modal = { kind:'toggle-status', sno };
+  renderModal();
+};
+
+window.confirmToggleStatus = async () => {
+  const sno = state.modal.sno;
+  const sku = state.skus.find(s => s.sno === sno);
+  if (!sku) { showToast("SKU not found", true); return; }
+  const reason = document.getElementById('toggle-reason').value.trim();
+  if (reason.length < 3) { showToast("Reason must be at least 3 characters.", true); return; }
+
+  const goingInactive = (sku.status !== 'inactive');
+  const newStatus = goingInactive ? 'inactive' : 'active';
+  const oldStatus = sku.status || 'active';
+
+  // Identify future-month forecasts to zero out (only on deactivation)
+  const futureToZero = [];
+  if (goingInactive) {
+    Object.values(state.allRecons).forEach(recon => {
+      if (recon.status !== 'open') return;
+      if (recon.monthCode === state.currentMonthCode) return;
+      if (recon.monthCode.localeCompare(state.currentMonthCode) <= 0) return;
+      const row = (recon.rows || []).find(r => r.sno === sku.sno);
+      if (row && Number(row.forecast) > 0) {
+        futureToZero.push({ recon, row, oldForecast: Number(row.forecast) });
+      }
+    });
+  }
+
+  // EDITOR PATH: submit as proposal
+  if (!canWriteDirectly()) {
+    try {
+      await submitProposal({
+        entity: 'sku_status',
+        target_id: sku.id,
+        target_label: `SKU ${sku.sno}: ${sku.name}`,
+        before_summary: oldStatus,
+        after_summary: newStatus,
+        payload: { skuId: sku.id, sno: sku.sno, skuName: sku.name, oldStatus, newStatus, futureForecastsToZero: futureToZero.length },
+        reason
+      });
+      state.modal = null;
+      renderModal();
+      showToast(`Proposal submitted: ${goingInactive?'deactivate':'activate'} SKU ${sku.sno}. Awaiting admin approval.`);
+    } catch (err) {
+      console.error("Proposal submit error:", err);
+      showToast("Submission failed: " + err.message, true);
+    }
+    return;
+  }
+
+  try {
+    // 1. Update SKU doc with new status
+    const updatedSku = { ...sku, status: newStatus, status_updatedAt: new Date().toISOString(), status_updatedBy: state.userProfile.name };
+    const { id, ...skuToWrite } = updatedSku;
+    await setDoc(doc(db, 'skus', sku.id), skuToWrite);
+
+    // 2. Zero out future-month forecasts for this SKU
+    for (const item of futureToZero) {
+      const updatedRows = item.recon.rows.map(r => r.sno === sku.sno ? { ...r, forecast: 0 } : r);
+      await setDoc(doc(db, 'reconciliations', item.recon.monthCode), {
+        ...item.recon,
+        rows: updatedRows,
+        updatedAt: new Date().toISOString(),
+        updatedBy: state.userProfile.name
+      });
+      // Update local state too
+      item.row.forecast = 0;
+    }
+
+    // 3. Write change_log
+    const futureSummary = futureToZero.length > 0 ? ` · zeroed ${futureToZero.length} future forecast${futureToZero.length===1?'':'s'}` : '';
+    await setDoc(doc(db, 'change_log', 'sku_status_' + sku.id + '_' + Date.now()), {
+      ts: new Date().toISOString(),
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'SKU Status',
+      action: `${goingInactive?'Deactivated':'Activated'} SKU ${sku.sno}: ${sku.name}${futureSummary}`,
+      before: oldStatus,
+      after: newStatus,
+      reason: reason,
+      details: {
+        skuId: sku.id,
+        sno: sku.sno,
+        skuName: sku.name,
+        oldStatus: oldStatus,
+        newStatus: newStatus,
+        zeroedForecasts: futureToZero.map(f => ({ monthCode: f.recon.monthCode, oldForecast: f.oldForecast }))
+      }
+    });
+
+    // Update local state
+    sku.status = newStatus;
+    sku.status_updatedAt = updatedSku.status_updatedAt;
+    sku.status_updatedBy = updatedSku.status_updatedBy;
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderDashboard();
+    showToast(`${goingInactive?'Deactivated':'Activated'} SKU ${sku.sno}${futureSummary}`);
+  } catch (err) {
+    console.error("Toggle status error:", err);
+    showToast("Save failed: " + err.message, true);
+  }
+};
+
+// === PROPOSAL APPROVAL HANDLERS ===
+window.setProposalsFilter = f => {
+  state.proposalsFilter = f;
+  document.getElementById('main').innerHTML = renderApprovals();
+};
+
+window.openRejectProposalModal = proposalId => {
+  if (!canWriteDirectly()) return;
+  state.modal = { kind: 'reject-proposal', proposalId };
+  renderModal();
+};
+
+window.confirmRejectProposal = async () => {
+  const proposalId = state.modal.proposalId;
+  const p = state.proposals.find(x => x.id === proposalId);
+  if (!p) { showToast("Proposal not found", true); return; }
+  if (p.status !== 'pending') { showToast("Proposal is no longer pending", true); return; }
+  const decisionReason = document.getElementById('reject-reason').value.trim();
+  if (decisionReason.length < 3) { showToast("Rejection reason must be at least 3 characters.", true); return; }
+
+  try {
+    const decidedAt = new Date().toISOString();
+    await setDoc(doc(db, 'proposals', proposalId), {
+      ...p,
+      status: 'rejected',
+      decided_at: decidedAt,
+      decided_by: state.userProfile.name,
+      decision_reason: decisionReason
+    });
+    await setDoc(doc(db, 'change_log', 'proposal_rejected_' + proposalId + '_' + Date.now()), {
+      ts: decidedAt,
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'Proposal Rejected',
+      action: `Rejected ${p.entity}: ${p.target_label}`,
+      before: p.before_summary,
+      after: p.after_summary,
+      reason: decisionReason,
+      details: { proposalId, originalProposer: p.proposer_name, originalReason: p.reason }
+    });
+    // Update local state
+    p.status = 'rejected';
+    p.decided_at = decidedAt;
+    p.decided_by = state.userProfile.name;
+    p.decision_reason = decisionReason;
+
+    state.modal = null;
+    renderModal();
+    document.getElementById('main').innerHTML = renderApprovals();
+    renderNav();
+    showToast(`Proposal rejected: ${p.target_label}`);
+  } catch (err) {
+    console.error("Reject error:", err);
+    showToast("Reject failed: " + err.message, true);
+  }
+};
+
+window.approveProposal = async (proposalId) => {
+  if (!canWriteDirectly()) return;
+  const p = state.proposals.find(x => x.id === proposalId);
+  if (!p) { showToast("Proposal not found", true); return; }
+  if (p.status !== 'pending') { showToast("Proposal is no longer pending", true); return; }
+
+  // Apply the proposal by routing to the appropriate live-write logic based on entity type
+  try {
+    const decidedAt = new Date().toISOString();
+    const decisionReason = `Approved by ${state.userProfile.name}`;
+
+    if (p.entity === 'rm_edit') {
+      const { rmId, oldRate, newRate, rmName } = p.payload;
+      const r = state.rms.find(x => x.id === rmId);
+      if (!r) { showToast("RM no longer exists in chart", true); return; }
+      await setDoc(doc(db, 'rm_prices', rmId), { ...r, rate: newRate, old_rate: r.rate, updatedAt: decidedAt, updatedBy: state.userProfile.name });
+      await setDoc(doc(db, 'rm_price_history', rmId + '_' + Date.now()), { rmId, rmName, rate: newRate, previousRate: r.rate, changedAt: decidedAt, changedBy: state.userProfile.name, reason: 'Proposal approved · ' + p.reason });
+      r.old_rate = r.rate; r.rate = newRate;
+      invalidateRMLookup();
+    } else if (p.entity === 'rm_add') {
+      const { sno, name, make, inci, rate } = p.payload;
+      const dup = state.rms.find(x => String(x.name||'').trim().toLowerCase() === name.toLowerCase());
+      if (dup) { showToast(`"${name}" already exists in chart now (added by another action)`, true); return; }
+      const newId = 'rm_' + sno;
+      const newDoc = { sno, name, make, inci, rate, old_rate: null, createdAt: decidedAt, createdBy: state.userProfile.name };
+      await setDoc(doc(db, 'rm_prices', newId), newDoc);
+      await setDoc(doc(db, 'rm_price_history', newId + '_' + Date.now()), { rmId: newId, rmName: name, rate, previousRate: null, changedAt: decidedAt, changedBy: state.userProfile.name, reason: 'Initial entry via approved proposal · ' + p.reason });
+      state.rms.push({ id: newId, ...newDoc });
+      state.rms.sort((a,b) => (a.sno||0)-(b.sno||0));
+      invalidateRMLookup();
+    } else if (p.entity === 'pm_edit') {
+      const { skuId, changes } = p.payload;
+      const sku = state.skus.find(s => s.id === skuId);
+      if (!sku) { showToast("SKU no longer exists", true); return; }
+      const updatedSku = { ...sku };
+      Object.entries(changes).forEach(([key, { new: newVal }]) => { updatedSku[key] = newVal; });
+      updatedSku.pm_updatedAt = decidedAt;
+      updatedSku.pm_updatedBy = state.userProfile.name;
+      const { id, ...skuToWrite } = updatedSku;
+      await setDoc(doc(db, 'skus', skuId), skuToWrite);
+      Object.entries(changes).forEach(([key, { new: newVal }]) => { sku[key] = newVal; });
+    } else if (p.entity === 'fixed_cc_edit') {
+      const { skuId, newVal } = p.payload;
+      const sku = state.skus.find(s => s.id === skuId);
+      if (!sku) { showToast("SKU no longer exists", true); return; }
+      const updatedSku = { ...sku, fixed_cc: newVal, pm_updatedAt: decidedAt, pm_updatedBy: state.userProfile.name };
+      const { id, ...skuToWrite } = updatedSku;
+      await setDoc(doc(db, 'skus', skuId), skuToWrite);
+      sku.fixed_cc = newVal;
+    } else if (p.entity === 'sku_status') {
+      const { skuId, newStatus } = p.payload;
+      const sku = state.skus.find(s => s.id === skuId);
+      if (!sku) { showToast("SKU no longer exists", true); return; }
+      const updatedSku = { ...sku, status: newStatus, status_updatedAt: decidedAt, status_updatedBy: state.userProfile.name };
+      const { id, ...skuToWrite } = updatedSku;
+      await setDoc(doc(db, 'skus', skuId), skuToWrite);
+      sku.status = newStatus;
+      // Note: future-month forecast zeroing is NOT done on approval — admin should do it manually if needed (would have been done by editor in their proposal context, but data may have moved)
+    } else {
+      showToast("Unknown proposal entity: " + p.entity, true);
+      return;
+    }
+
+    // Mark proposal as approved
+    await setDoc(doc(db, 'proposals', proposalId), {
+      ...p,
+      status: 'approved',
+      decided_at: decidedAt,
+      decided_by: state.userProfile.name,
+      decision_reason: decisionReason
+    });
+
+    // Write change_log entry for the approval
+    await setDoc(doc(db, 'change_log', 'proposal_approved_' + proposalId + '_' + Date.now()), {
+      ts: decidedAt,
+      user: state.userProfile.name,
+      uid: state.currentUser.uid,
+      role: state.realRole,
+      entity: 'Proposal Approved',
+      action: `Approved ${p.entity}: ${p.target_label}`,
+      before: p.before_summary,
+      after: p.after_summary,
+      reason: 'Proposal by ' + p.proposer_name + ': ' + p.reason,
+      details: { proposalId, originalProposer: p.proposer_name, originalReason: p.reason }
+    });
+
+    // Update local state
+    p.status = 'approved';
+    p.decided_at = decidedAt;
+    p.decided_by = state.userProfile.name;
+    p.decision_reason = decisionReason;
+
+    document.getElementById('main').innerHTML = renderApprovals();
+    renderNav();
+    showToast(`Approved: ${p.target_label}`);
+  } catch (err) {
+    console.error("Approve error:", err);
+    showToast("Approve failed: " + err.message, true);
+  }
+};
+
+// === SCENARIO HANDLERS ===
+window.setScenarioRm = (rmId) => {
+  state.scenario.rmId = rmId || null;
+  state.scenario.result = null; // re-pick clears prior result
+  document.getElementById('main').innerHTML = renderScenarios();
+};
+
+window.setScenarioDelta = (pct) => {
+  state.scenario.deltaPct = pct;
+  state.scenario.customPct = '';
+  document.getElementById('main').innerHTML = renderScenarios();
+};
+
+window.setScenarioCustom = (val) => {
+  state.scenario.customPct = val;
+  const n = Number(val);
+  if (val !== '' && isFinite(n) && n >= -100 && n <= 1000) {
+    state.scenario.deltaPct = n;
+  }
+  // Don't re-render on every keystroke — just update the value silently
+};
+
+window.executeScenario = () => {
+  const scen = state.scenario;
+  if (!scen.rmId) { showToast("Pick an RM first.", true); return; }
+  if (scen.deltaPct == null) { showToast("Pick or enter a % change.", true); return; }
+  if (!isFinite(scen.deltaPct)) { showToast("Invalid % change.", true); return; }
+  state.scenario.result = runScenario(scen.rmId, scen.deltaPct);
+  document.getElementById('main').innerHTML = renderScenarios();
+};
+
+// === PURCHASE HISTORY TAB ===
+async function loadPurchaseHistory() {
+  if (state.phLoaded) return;
+  try {
+    const snap = await getDocs(collection(db, 'purchase_history'));
+    state.purchaseHistory = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))); // newest first
+    state.phLoaded = true;
+  } catch (e) {
+    console.error('purchase_history load failed:', e);
+    state.purchaseHistory = [];
+    state.phLoaded = true;
+  }
+}
+
+async function renderPurchaseHistory() {
+  const m = document.getElementById('main');
+  m.innerHTML = `<div class="placeholder"><h3>Loading purchase history…</h3></div>`;
+  await loadPurchaseHistory();
+  m.innerHTML = renderPurchaseHistoryView();
+}
+
+function renderPurchaseHistoryView() {
+  const all = state.purchaseHistory || [];
+  const q = (state.phSearch || '').toLowerCase();
+  const filtered = q
+    ? all.filter(r => String(r.item_name||'').toLowerCase().includes(q) || String(r.supplier||'').toLowerCase().includes(q))
+    : all;
+
+  if (all.length === 0) {
+    return `
+      <div class="section-header">
+        <div>
+          <div class="section-title">Purchase History</div>
+          <div class="section-sub">Tally Purchase Register data — historical actuals for RM and PM purchases</div>
+        </div>
+      </div>
+      <div class="placeholder">
+        <h3>No purchase history yet</h3>
+        <p style="margin-top:8px;line-height:1.7">Use the standalone import tool to load your Tally Purchase Register Excel:</p>
+        <p style="margin-top:8px"><a href="purchase_history.html" style="color:#d4a574">Open import tool →</a></p>
+        <p style="margin-top:8px;color:#5b6775;font-size:12px">After importing, refresh this tab to see the data.</p>
+      </div>`;
+  }
+
+  // Stats
+  const distinctItems = new Set(all.map(r => String(r.item_name||'').toUpperCase())).size;
+  const distinctSuppliers = new Set(all.map(r => r.supplier).filter(Boolean)).size;
+  const totalSpend = all.reduce((a, b) => a + (Number(b.value) || 0), 0);
+  const dates = all.map(r => r.date).filter(Boolean).sort();
+  const dateRange = dates.length > 0 ? `${dates[0].substring(0,7)} → ${dates[dates.length-1].substring(0,7)}` : '—';
+
+  // Per-item aggregates for filtered set
+  const byItem = {};
+  filtered.forEach(r => {
+    const k = String(r.item_name || '').toUpperCase();
+    if (!byItem[k]) byItem[k] = { name: r.item_name, count: 0, totalQty: 0, totalValue: 0, rates: [], suppliers: new Set(), latestDate: '', latestRate: null };
+    byItem[k].count++;
+    byItem[k].totalQty += Number(r.qty) || 0;
+    byItem[k].totalValue += Number(r.value) || 0;
+    if (r.rate != null) byItem[k].rates.push(Number(r.rate));
+    if (r.supplier) byItem[k].suppliers.add(r.supplier);
+    if (String(r.date || '') > byItem[k].latestDate) {
+      byItem[k].latestDate = String(r.date || '');
+      byItem[k].latestRate = r.rate != null ? Number(r.rate) : null;
+    }
+  });
+
+  const itemRows = Object.values(byItem)
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 200) // cap at 200 to keep render fast
+    .map(item => {
+      const minRate = item.rates.length > 0 ? Math.min(...item.rates) : null;
+      const maxRate = item.rates.length > 0 ? Math.max(...item.rates) : null;
+      const avgRate = item.rates.length > 0 ? item.rates.reduce((a,b) => a+b, 0) / item.rates.length : null;
+      const rateRange = minRate !== null
+        ? (Math.abs(maxRate - minRate) < 0.01
+            ? `₹${fmt(avgRate, 0)}`
+            : `₹${fmt(minRate, 0)}–₹${fmt(maxRate, 0)}`)
+        : '—';
+      const latestDateStr = item.latestDate ? item.latestDate.substring(0, 10) : '—';
+      return `<tr>
+        <td class="left" style="color:#e8ecf0">${item.name}</td>
+        <td>${item.count}</td>
+        <td>${item.totalQty.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td style="color:#d4a574">₹${fmt(item.totalValue, 0)}</td>
+        <td>${rateRange}</td>
+        <td>${item.latestRate != null ? '₹'+fmt(item.latestRate, 0) : '—'}</td>
+        <td class="left" style="color:#5b6775;font-size:11px">${latestDateStr}</td>
+        <td>${item.suppliers.size}</td>
+      </tr>`;
+    }).join('');
+
+  return `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Purchase History</div>
+        <div class="section-sub">${all.length.toLocaleString('en-IN')} purchase rows · ${distinctItems} distinct items · ${distinctSuppliers} suppliers · ${dateRange}</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="search-wrap"><span class="search-icon">⌕</span><input type="search" placeholder="Search item or supplier" value="${state.phSearch}" oninput="updatePhSearch(this.value)"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+        <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Total spend</div>
+        <div style="color:#d4a574;font-size:22px;font-weight:600;margin-top:4px">₹${(totalSpend/10000000).toFixed(2)} Cr</div>
+        <div style="color:#5b6775;font-size:10px;margin-top:2px">${dateRange}</div>
+      </div>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+        <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Purchase rows</div>
+        <div style="color:#e8ecf0;font-size:22px;font-weight:600;margin-top:4px">${all.length.toLocaleString('en-IN')}</div>
+        <div style="color:#5b6775;font-size:10px;margin-top:2px">filtered: ${filtered.length.toLocaleString('en-IN')}</div>
+      </div>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+        <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Distinct items</div>
+        <div style="color:#e8ecf0;font-size:22px;font-weight:600;margin-top:4px">${distinctItems}</div>
+        <div style="color:#5b6775;font-size:10px;margin-top:2px">RMs + PMs combined</div>
+      </div>
+      <div style="background:#0a0e13;border:1px solid #1f2a35;border-radius:4px;padding:12px 14px">
+        <div style="color:#5b6775;font-size:10px;text-transform:uppercase;letter-spacing:0.1em">Suppliers</div>
+        <div style="color:#e8ecf0;font-size:22px;font-weight:600;margin-top:4px">${distinctSuppliers}</div>
+      </div>
+    </div>
+    <h3 style="font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:#8a95a3;margin-bottom:10px;font-weight:600">By item · top 200 by total spend</h3>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th class="left">Item</th>
+        <th>Purchases</th>
+        <th>Total Qty</th>
+        <th>Total Spend ₹</th>
+        <th>Rate range ₹</th>
+        <th>Latest rate</th>
+        <th class="left">Latest date</th>
+        <th>Suppliers</th>
+      </tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table></div>
+    <div class="footer-note">Aggregated by item — showing top 200 by total spend. Search filters both items and suppliers. Data imported from Tally Purchase Register via the standalone import tool. Items with "RM-NNNNN" prefix are mapped from Tally codes; others are freeform names that may need cleanup before linking to your RM chart.</div>
+  `;
+}
+
+window.updatePhSearch = (val) => {
+  state.phSearch = val;
+  document.getElementById('main').innerHTML = renderPurchaseHistoryView();
+};
+</script>
+</body>
+</html>
